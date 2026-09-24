@@ -22,6 +22,7 @@ Every push to `main` deploys to production. The `skies-lp` Worker in the Cloudfl
 - [`wrangler.jsonc`](wrangler.jsonc) holds the Worker config. Its `build.command` runs `npm run build` before each deploy, so the dashboard needs no build command. The Worker `name` must match the dashboard's Worker name.
 - The custom domain `useskies.com` is declared in `routes`, and Cloudflare manages its DNS record.
 - `www.useskies.com` is not part of the Worker. It lives in the Cloudflare dashboard as a proxied placeholder DNS record (`A 192.0.2.1`) plus a Redirect Rule ("Redirect www to useskies.com") that sends a 301 to `https://useskies.com`, keeping the path and query string.
+- Analytics come from Umami Cloud (cookieless), through the script in `src/layouts/Base.astro`. `data-domains` limits tracking to `useskies.com`, so dev and preview visits aren't counted. If you change analytics, update the "This website" section of `/privacy`.
 - "Always Use HTTPS" is on for the zone (SSL/TLS → Edge Certificates), so plain `http://` requests get a 301 to `https://`.
 - [`public/_headers`](public/_headers) sets security headers, and long-lived caching for the hashed files in `/_astro/`.
 - Pages are built as `privacy.html` and served at clean URLs (`/privacy`). Unknown paths get `404.html`.
