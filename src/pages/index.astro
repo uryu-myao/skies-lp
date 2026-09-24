@@ -19,7 +19,12 @@ import { STORE_URL } from '../lib/links';
           the color of its sky right now.
         </p>
         <div class="hero__actions">
-          <a class="button button--primary" href={STORE_URL}>Add to Chrome</a>
+          <a
+            class="button button--primary"
+            href={STORE_URL}
+            data-umami-event="add-to-chrome"
+            data-umami-event-location="hero">Add to Chrome</a
+          >
           <a class="button button--ghost" href="#features">See features</a>
         </div>
       </div>
@@ -54,7 +59,12 @@ import { STORE_URL } from '../lib/links';
     <div class="container cta__inner">
       <img src="/favicon.svg" alt="" width="56" height="56" />
       <h2>Know the time, wherever your team is.</h2>
-      <a class="button button--primary" href={STORE_URL}>Add to Chrome</a>
+      <a
+        class="button button--primary"
+        href={STORE_URL}
+        data-umami-event="add-to-chrome"
+        data-umami-event-location="cta">Add to Chrome</a
+      >
     </div>
   </section>
 </Base>

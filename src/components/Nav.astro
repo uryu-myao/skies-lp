@@ -11,7 +11,12 @@ import { STORE_URL } from '../lib/links';
     <nav class="nav__links" aria-label="Main">
       <a href="/#features">Features</a>
       <a href="/privacy">Privacy</a>
-      <a class="button button--primary button--small" href={STORE_URL}>Add to Chrome</a>
+      <a
+        class="button button--primary button--small"
+        href={STORE_URL}
+        data-umami-event="add-to-chrome"
+        data-umami-event-location="nav">Add to Chrome</a
+      >
     </nav>
   </div>
 </header>
