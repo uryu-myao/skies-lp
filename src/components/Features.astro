@@ -1,0 +1,420 @@
+---
+const skies = [
+  { name: 'Night', c: ['#12111e', '#1d1c27', '#2a2933'] },
+  { name: 'Dawn', c: ['#608ebb', '#b994c3', '#e8cba1'] },
+  { name: 'Day', c: ['#3d83e5', '#74b6e6', '#b2d0f0'] },
+  { name: 'Twilight', c: ['#102d58', '#3e4f85', '#df524e'] },
+];
+
+// Working hours on a Tokyo clock: Tokyo 9–18, Singapore 9–18 (10–19 here),
+// Berlin in winter 9–18 (16–01 here). Everyone overlaps 16:00–18:00.
+const coreRows = [
+  { city: 'Tokyo', from: 9, to: 18 },
+  { city: 'Singapore', from: 10, to: 19 },
+  { city: 'Berlin', from: 16, to: 24 },
+];
+const overlap = { from: 16, to: 18 };
+const pct = (h: number) => `${(h / 24) * 100}%`;
+---
+
+<section class="features" id="features">
+  <div class="container">
+    <header class="features__intro">
+      <p class="eyebrow">Features</p>
+      <h2>Built for working across time zones</h2>
+      <p>Everything opens from one click on the toolbar, and nothing gets in the way of reading the time.</p>
+    </header>
+
+    <div class="features__grid">
+      <article class="feature">
+        <div class="feature__visual">
+          <div class="chip chip--night">
+            <span><b>−13h</b> <i>UTC−04</i></span>
+            <span><b>yesterday</b> | wed 23 sep</span>
+          </div>
+          <div class="chip chip--day">
+            <span><b>+3:30h</b> <i>UTC+05:30</i></span>
+            <span>thu 24 sep</span>
+          </div>
+        </div>
+        <h3>Gaps, not offsets</h3>
+        <p>
+          Each city leads with how far it is from you: −13h, +3:30h, or Base. The UTC offset sits beside it as a
+          cross-check, and a date that isn't yours says yesterday or tomorrow.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual feature__visual--skies">
+          {
+            skies.map((s) => (
+              <span class="sky" style={`--c0:${s.c[0]};--c1:${s.c[1]};--c2:${s.c[2]}`}>
+                {s.name}
+              </span>
+            ))
+          }
+        </div>
+        <h3>A sky for every city</h3>
+        <p>
+          Cards take on the color of each city's sky right now: night, dawn, day, or twilight, timed to its local
+          sunrise and sunset.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual">
+          <div class="mini-slider" aria-hidden="true">
+            <span class="mini-slider__rail"></span>
+            <span class="mini-slider__thumb"></span>
+          </div>
+          <div class="mini-slider__scale" aria-hidden="true"><span>00</span><span>12</span><span>24</span></div>
+        </div>
+        <h3>Time converter</h3>
+        <p>
+          Drag one slider across 24 hours and every city moves with it. Find a slot that works before you send the
+          invite.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual">
+          <div class="core" aria-hidden="true">
+            {
+              coreRows.map((r, i) => (
+                <>
+                  <span class="core__city" style={`grid-row:${i + 1}`}>{r.city}</span>
+                  <span class="core__lane" style={`grid-row:${i + 1}`}>
+                    <span class="core__hours" style={`left:${pct(r.from)};width:${pct(r.to - r.from)}`} />
+                  </span>
+                </>
+              ))
+            }
+            <span class="core__overlay">
+              <span class="core__overlap" style={`left:${pct(overlap.from)};width:${pct(overlap.to - overlap.from)}`}
+              ></span>
+            </span>
+          </div>
+        </div>
+        <h3>Core Time</h3>
+        <p>
+          See when everyone's working hours overlap. When there's no overlap today, Skies shows you when the next one
+          is.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual feature__visual--dst">
+          <span><em>January</em> Berlin <b>−8h</b></span>
+          <span><em>July</em> Berlin <b>−7h</b></span>
+          <small>From Tokyo</small>
+        </div>
+        <h3>Daylight saving, handled</h3>
+        <p>
+          Gaps are worked out for the moment you're looking at, never cached. When a city changes its clocks, Skies
+          shows it the same day.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual feature__visual--list">
+          {
+            ['Tokyo', 'London'].map((city) => (
+              <span class="row">
+                <span class="row__grip" aria-hidden="true" />
+                {city}
+              </span>
+            ))
+          }
+          <span class="toast">Removed Sydney · <b>Undo</b></span>
+        </div>
+        <h3>Your list, your way</h3>
+        <p>
+          Search for up to 10 cities, give them your own names, and reorder them by drag or keyboard. Removed one by
+          mistake? Undo.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style lang="scss">
+  .features {
+    padding: clamp(40px, 6vw, 72px) 0 clamp(72px, 10vw, 120px);
+
+    &__intro {
+      max-width: 620px;
+      margin-bottom: 48px;
+
+      h2 {
+        margin: 12px 0 14px;
+        font-size: clamp(30px, 4.4vw, 44px);
+      }
+
+      p:last-child {
+        color: var(--color-text-muted);
+      }
+    }
+
+    &__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+      gap: 20px;
+    }
+  }
+
+  .feature {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 26px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+
+    h3 {
+      margin: 22px 4px 8px;
+      font-size: 20px;
+    }
+
+    p {
+      margin: 0 4px;
+      font-size: 16px;
+      color: var(--color-text-muted);
+    }
+
+    &__visual {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      height: 148px;
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--color-surface-raised);
+      overflow: hidden;
+
+      &--skies {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 6px;
+      }
+
+      &--dst {
+        align-items: flex-start;
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 600;
+
+        span {
+          display: flex;
+          gap: 10px;
+          align-items: baseline;
+        }
+
+        em {
+          width: 64px;
+          font-style: normal;
+          font-size: 12px;
+          color: var(--color-text-faint);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        b {
+          color: var(--color-logo-bottom);
+        }
+
+        small {
+          margin-top: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--color-text-faint);
+        }
+      }
+
+      &--list {
+        gap: 6px;
+        justify-content: flex-start;
+      }
+    }
+  }
+
+  .chip {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+
+    b {
+      color: #fff;
+      font-size: 12px;
+      text-transform: none;
+    }
+
+    i {
+      font-style: normal;
+      opacity: 0.75;
+    }
+
+    &--night {
+      background: linear-gradient(180deg, #12111e, #2a2933);
+      box-shadow: rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
+    }
+
+    &--day {
+      background: linear-gradient(180deg, #3d83e5, #b2d0f0);
+    }
+  }
+
+  .sky {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--c0), var(--c1) 50%, var(--c2));
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .mini-slider {
+    position: relative;
+    height: 22px;
+
+    &__rail {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 6px;
+      border-radius: 100vw;
+      background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.55) 2px, transparent 2.5px) 5px 50% / calc((100% - 10px) / 8) 100%
+          repeat-x,
+        linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
+      transform: translateY(-50%);
+    }
+
+    &__thumb {
+      position: absolute;
+      top: 50%;
+      left: 66%;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      transform: translate(-50%, -50%);
+      animation: slide 6s ease-in-out infinite;
+    }
+
+    &__scale {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--color-text-faint);
+    }
+  }
+
+  @keyframes slide {
+    0%,
+    100% {
+      left: 30%;
+    }
+    50% {
+      left: 72%;
+    }
+  }
+
+  .core {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: repeat(3, auto);
+    align-items: center;
+    gap: 12px;
+
+    &__city {
+      grid-column: 1;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+    }
+
+    &__lane {
+      grid-column: 2;
+      position: relative;
+      height: 12px;
+      border-radius: 100vw;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &__hours {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 100vw;
+      background: var(--color-blue);
+    }
+
+    // Spans every lane, so the overlap box lines up with the hour scale
+    &__overlay {
+      position: relative;
+      grid-column: 2;
+      grid-row: 1 / -1;
+      align-self: stretch;
+      pointer-events: none;
+    }
+
+    &__overlap {
+      position: absolute;
+      top: -6px;
+      bottom: -6px;
+      border: 2px solid var(--color-core);
+      border-radius: 8px;
+    }
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+
+    &__grip {
+      width: 10px;
+      height: 14px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1.2px, transparent 1.6px) 0 0 / 5px 4.67px;
+    }
+  }
+
+  .toast {
+    align-self: center;
+    margin-top: 4px;
+    padding: 5px 14px;
+    border-radius: 100vw;
+    background: #fff;
+    color: #202025;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+
+    b {
+      color: var(--color-blue);
+    }
+  }
+</style>

@@ -1,0 +1,69 @@
+---
+import { STORE_URL } from '../lib/links';
+---
+
+<header class="nav">
+  <div class="container nav__inner">
+    <a class="nav__brand" href="/" aria-label="Skies home">
+      <img src="/favicon.svg" alt="" width="28" height="28" />
+      <span>Skies</span>
+    </a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="/#features">Features</a>
+      <a href="/privacy">Privacy</a>
+      <a class="button button--primary button--small" href={STORE_URL}>Add to Chrome</a>
+    </nav>
+  </div>
+</header>
+
+<style lang="scss">
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(17, 16, 23, 0.72);
+    backdrop-filter: saturate(160%) blur(14px);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+    border-bottom: 1px solid var(--color-border);
+
+    &__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    &__brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    &__links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      font-size: 15px;
+
+      a:not(.button) {
+        color: var(--color-text-muted);
+        text-decoration: none;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: var(--color-text);
+        }
+      }
+    }
+  }
+
+  @media (max-width: 560px) {
+    .nav__links a:not(.button) {
+      display: none;
+    }
+  }
+</style>

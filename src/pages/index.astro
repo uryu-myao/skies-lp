@@ -1,0 +1,162 @@
+---
+import Base from '../layouts/Base.astro';
+import PopupDemo from '../components/PopupDemo.astro';
+import Features from '../components/Features.astro';
+import { STORE_URL } from '../lib/links';
+---
+
+<Base
+  title="Skies — World Clock & Time Zones for Chrome"
+  description="Skies keeps up to 10 cities in one Chrome popup. Each shows its gap from your own time, with a time converter and a Core Time view of everyone's working hours."
+>
+  <section class="hero">
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="eyebrow">World clock for Chrome</p>
+        <h1>Every time zone, measured from yours.</h1>
+        <p class="hero__lede">
+          Skies keeps your cities in one popup. Each one shows its gap from your time, like −13h or +3:30h, under
+          the color of its sky right now.
+        </p>
+        <div class="hero__actions">
+          <a class="button button--primary" href={STORE_URL}>Add to Chrome</a>
+          <a class="button button--ghost" href="#features">See features</a>
+        </div>
+      </div>
+      <div class="hero__demo">
+        <PopupDemo />
+      </div>
+    </div>
+  </section>
+
+  <Features />
+
+  <section class="privacy">
+    <div class="container">
+      <div class="privacy__panel">
+        <div>
+          <p class="eyebrow">Privacy</p>
+          <h2>Your cities stay on your device.</h2>
+        </div>
+        <ul>
+          <li><b>No account.</b> Install it and add a city. That's the whole setup.</li>
+          <li><b>No tracking, no ads.</b> Skies doesn't collect analytics.</li>
+          <li>
+            <b>Saved in your browser.</b> Your list and settings are kept locally, not on a server.{' '}
+            <a href="/privacy">Read the privacy policy</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container cta__inner">
+      <img src="/favicon.svg" alt="" width="56" height="56" />
+      <h2>Know the time, wherever your team is.</h2>
+      <a class="button button--primary" href={STORE_URL}>Add to Chrome</a>
+    </div>
+  </section>
+</Base>
+
+<style lang="scss">
+  .hero {
+    position: relative;
+    padding: clamp(48px, 8vw, 96px) 0 clamp(40px, 6vw, 72px);
+    overflow: hidden;
+
+    &__inner {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      gap: 56px;
+    }
+
+    &__copy {
+      max-width: 560px;
+
+      h1 {
+        margin: 16px 0 20px;
+        font-size: clamp(38px, 6vw, 60px);
+      }
+    }
+
+    &__lede {
+      font-size: clamp(17px, 1.6vw, 19px);
+      color: var(--color-text-muted);
+    }
+
+    &__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .hero__inner {
+      grid-template-columns: 1fr 440px;
+      gap: 64px;
+    }
+  }
+
+  .privacy {
+    &__panel {
+      display: grid;
+      gap: 28px 64px;
+      padding: clamp(28px, 5vw, 56px);
+      border-radius: 28px;
+      background:
+        radial-gradient(120% 140% at 0% 0%, rgba(64, 121, 200, 0.22), transparent 60%),
+        var(--color-surface);
+      border: 1px solid var(--color-border);
+
+      h2 {
+        margin-top: 12px;
+        font-size: clamp(28px, 3.6vw, 38px);
+      }
+
+      ul {
+        display: grid;
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        color: var(--color-text-muted);
+      }
+
+      b {
+        color: var(--color-text);
+      }
+
+      a {
+        color: var(--color-logo-bottom);
+      }
+    }
+  }
+
+  @media (min-width: 860px) {
+    .privacy__panel {
+      grid-template-columns: 1fr 1.1fr;
+      align-items: center;
+    }
+  }
+
+  .cta {
+    padding: clamp(80px, 12vw, 140px) 0;
+
+    &__inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      text-align: center;
+
+      h2 {
+        max-width: 640px;
+        font-size: clamp(30px, 4.6vw, 48px);
+      }
+    }
+  }
+</style>

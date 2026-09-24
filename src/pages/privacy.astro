@@ -1,0 +1,111 @@
+---
+import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL, FEEDBACK_URL } from '../lib/links';
+---
+
+<Base
+  title="Privacy Policy — Skies"
+  description="How the Skies Chrome extension and useskies.com handle your data: no account, no analytics, and your cities stay in your browser."
+>
+  <article class="container legal">
+    <p class="eyebrow">Legal</p>
+    <h1>Privacy Policy</h1>
+    <p class="legal__updated">Last updated: September 24, 2026</p>
+
+    <p>
+      Skies is a world clock extension for Chrome. It doesn't have accounts, doesn't collect analytics, and doesn't
+      sell or share personal data. This page covers what the extension stores and which outside services it contacts.
+    </p>
+
+    <h2>What stays on your device</h2>
+    <p>
+      Your city list, any names you give cities, their order, and your settings are saved in your browser's local
+      storage. Skies also caches each city's sunrise and sunset times for the day. None of this is sent to us, and it's
+      removed when you uninstall the extension.
+    </p>
+
+    <h2>Services Skies contacts</h2>
+    <ul>
+      <li>
+        <b>City search.</b> The text you type in search is sent to the{' '}
+        <a href="https://open-meteo.com/">Open-Meteo Geocoding API</a> to find matching cities.
+      </li>
+      <li>
+        <b>Sunrise and sunset.</b> The coordinates and time zone of each city you add are sent to the Open-Meteo
+        Forecast API, about once a day, to pick the color of its card.
+      </li>
+      <li>
+        <b>Flags.</b> Country flags in search results load from flagcdn.com.
+      </li>
+    </ul>
+    <p>
+      These requests don't carry any identifier from Skies. As with any web request, these providers can see your IP
+      address.
+    </p>
+
+    <h2>Feedback</h2>
+    <p>
+      When you uninstall Skies, or choose Send Feedback in its settings, a <a href={FEEDBACK_URL}>Google Form</a> opens.
+      Filling it in is optional. Anything you submit is collected by Google Forms and read by us to improve Skies.
+    </p>
+
+    <h2>This website</h2>
+    <p>
+      useskies.com doesn't use cookies or analytics. It's hosted on Cloudflare, which processes basic request data such
+      as IP addresses to deliver and protect the site.
+    </p>
+
+    <h2>Changes</h2>
+    <p>If this policy changes, the updated version will be posted on this page with a new date.</p>
+
+    <h2>Contact</h2>
+    <p>Questions? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+  </article>
+</Base>
+
+<style lang="scss">
+  .legal {
+    max-width: calc(720px + var(--gutter) * 2);
+    padding-top: clamp(48px, 8vw, 88px);
+    padding-bottom: clamp(64px, 10vw, 112px);
+
+    h1 {
+      margin: 12px 0 8px;
+      font-size: clamp(34px, 5vw, 48px);
+    }
+
+    h2 {
+      margin: 40px 0 12px;
+      font-size: 22px;
+    }
+
+    p,
+    ul {
+      color: var(--color-text-muted);
+    }
+
+    p + p {
+      margin-top: 12px;
+    }
+
+    ul {
+      display: grid;
+      gap: 10px;
+      margin: 0 0 12px;
+      padding-left: 20px;
+    }
+
+    b {
+      color: var(--color-text);
+    }
+
+    a {
+      color: var(--color-logo-bottom);
+    }
+
+    &__updated {
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+  }
+</style>

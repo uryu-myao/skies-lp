@@ -1,0 +1,576 @@
+---
+import { cardView, makeStars, type City } from '../lib/tz';
+
+// What visitors without JavaScript see: 09:30 on a Thursday in Tokyo, which
+// puts the other cities under night and twilight skies. The script below
+// swaps in the visitor's own time zone as Base and keeps the cards live.
+const SNAPSHOT = new Date('2026-09-24T00:30:00Z');
+const REFERENCE = 'Asia/Tokyo';
+const CITIES: City[] = [
+  { city: 'Tokyo', zone: 'Asia/Tokyo' },
+  { city: 'London', zone: 'Europe/London' },
+  { city: 'New York', zone: 'America/New_York' },
+  { city: 'San Francisco', zone: 'America/Los_Angeles' },
+];
+const cards = CITIES.map((c) => ({ ...cardView(c, REFERENCE, SNAPSHOT), stars: makeStars(c.zone) }));
+const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
+---
+
+<figure class="demo" data-demo>
+  <div class="popup">
+    <div class="popup__header" aria-hidden="true">
+      <img src="/favicon.svg" alt="" width="31" height="31" />
+      <span class="popup__actions">
+        <img src="/icons/icon-search-dark.svg" alt="" width="21" height="21" />
+        <img src="/icons/icon-convert-dark.svg" alt="" width="21" height="21" />
+        <img src="/icons/icon-setting-header.svg" alt="" width="19" height="19" />
+      </span>
+    </div>
+
+    <div class="converter">
+      <div class="converter__head">
+        <span class="converter__title">Converter</span>
+        <output class="converter__value" data-converter-label>Now</output>
+        <button class="converter__reset" type="button" data-converter-reset hidden>Back to now</button>
+      </div>
+      <div class="converter__track">
+        <span class="converter__dots" aria-hidden="true">{scale.map(() => <span />)}</span>
+        <input
+          class="converter__slider"
+          type="range"
+          min="0"
+          max="48"
+          step="1"
+          value="19"
+          aria-label="Pick a time in your time zone"
+          data-converter
+        />
+      </div>
+      <div class="converter__scale" aria-hidden="true">
+        {scale.map((label) => <span>{label}</span>)}
+      </div>
+    </div>
+
+    <ul class="popup__list" aria-label="City clocks">
+      {
+        cards.map((card) => (
+          <li class="tz" data-card data-sky={card.sky}>
+            <svg class="tz__stars" viewBox="0 0 384 82" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              {card.stars.map((s) => (
+                <circle cx={s.cx} cy={s.cy} r={s.r} fill="white" fill-opacity={s.o} />
+              ))}
+            </svg>
+            <span class="tz__city" data-field="city">{card.city}</span>
+            <span class="tz__time" data-field="time">{card.time}</span>
+            <span class="tz__footer">
+              <span>
+                <span class="tz__relative" data-field="relative">{card.relative}</span>
+                <span class="tz__utc" data-field="utc">{card.utc}</span>
+              </span>
+              <span>
+                <span class="tz__day" data-field="dayLabel" hidden={!card.dayLabel}>{card.dayLabel}</span>
+                <span class="tz__week" data-field="week">{card.week}</span>
+                <span class="tz__date" data-field="date">{card.date}</span>
+                <span class="tz__month" data-field="month">{card.month}</span>
+              </span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+  <figcaption class="demo__caption">
+    Live demo: your time zone is Base. Drag the converter to plan ahead.
+  </figcaption>
+</figure>
+
+<script>
+  import { cardView, type CardView, type City } from '../lib/tz';
+
+  const POOL: City[] = [
+    { city: 'London', zone: 'Europe/London' },
+    { city: 'New York', zone: 'America/New_York' },
+    { city: 'Tokyo', zone: 'Asia/Tokyo' },
+    { city: 'San Francisco', zone: 'America/Los_Angeles' },
+    { city: 'Sydney', zone: 'Australia/Sydney' },
+  ];
+  const FIELDS = ['city', 'time', 'relative', 'utc', 'dayLabel', 'week', 'date', 'month'] as const;
+
+  function cityName(zone: string): string {
+    if (!zone.includes('/') || zone.startsWith('Etc/')) return 'Your time';
+    return zone.split('/').pop()!.replace(/_/g, ' ');
+  }
+
+  function nowIndex(): number {
+    const d = new Date();
+    return Math.round((d.getHours() * 60 + d.getMinutes()) / 30);
+  }
+
+  function hhmm(date: Date): string {
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-demo]');
+  const slider = root?.querySelector<HTMLInputElement>('[data-converter]');
+  const label = root?.querySelector<HTMLOutputElement>('[data-converter-label]');
+  const reset = root?.querySelector<HTMLButtonElement>('[data-converter-reset]');
+
+  if (root && slider && label && reset) {
+    const reference = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const cities: City[] = [
+      { city: cityName(reference), zone: reference },
+      ...POOL.filter((c) => c.zone !== reference),
+    ];
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+    let converting = false;
+
+    const converterDate = () => {
+      const d = new Date();
+      d.setHours(0, Number(slider.value) * 30, 0, 0);
+      return d;
+    };
+
+    const paint = (card: HTMLElement, view: CardView) => {
+      card.dataset.sky = view.sky;
+      for (const field of FIELDS) {
+        const el = card.querySelector<HTMLElement>(`[data-field="${field}"]`);
+        if (!el || el.textContent === view[field]) continue;
+        el.textContent = view[field];
+        if (field === 'dayLabel') el.hidden = !view.dayLabel;
+      }
+    };
+
+    const render = () => {
+      const date = converting ? converterDate() : new Date();
+      cards.forEach((card, i) => paint(card, cardView(cities[i], reference, date)));
+      root.toggleAttribute('data-converting', converting);
+      const text = converting ? `${hhmm(date)} your time` : 'Now';
+      label.value = text;
+      slider.setAttribute('aria-valuetext', text);
+      reset.hidden = !converting;
+    };
+
+    slider.value = String(nowIndex());
+    slider.addEventListener('input', () => {
+      converting = true;
+      render();
+    });
+    reset.addEventListener('click', () => {
+      converting = false;
+      slider.value = String(nowIndex());
+      render();
+    });
+
+    render();
+    setInterval(() => {
+      if (!converting) render();
+    }, 1000);
+  }
+</script>
+
+<style lang="scss">
+  @property --tz-c0 {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #3d83e5;
+  }
+  @property --tz-c1 {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #74b6e6;
+  }
+  @property --tz-c2 {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: #b2d0f0;
+  }
+
+  .demo {
+    position: relative;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    // A twilight glow behind the popup
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 8% -12% 12%;
+      z-index: -1;
+      background:
+        radial-gradient(closest-side at 35% 40%, rgba(64, 121, 200, 0.45), transparent),
+        radial-gradient(closest-side at 70% 70%, rgba(223, 82, 78, 0.22), transparent);
+      filter: blur(40px);
+    }
+
+    &__caption {
+      margin-top: 18px;
+      font-size: 14px;
+      color: var(--color-text-faint);
+      text-align: center;
+    }
+  }
+
+  .popup {
+    width: min(420px, 100%);
+    padding-bottom: 14px;
+    background: var(--color-popup);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 30px 80px -20px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      padding: 0 18px;
+    }
+
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 6px 12px;
+      background: rgba(0, 170, 255, 0.12);
+      border-radius: 100vw;
+    }
+
+    &__list {
+      list-style: none;
+      margin: 0;
+      padding: 0 18px;
+    }
+  }
+
+  .converter {
+    margin: 0 18px 12px;
+    padding: 12px 14px 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+
+    &__head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 26px;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    &__title {
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    &__value {
+      color: #fff;
+    }
+
+    &__reset {
+      margin-left: auto;
+      padding: 4px 10px;
+      border: 0;
+      border-radius: 100vw;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font: inherit;
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    // The thumb's centre travels from half a thumb in at each end, so the
+    // dots and the scale are inset by the same amount to line up with it.
+    &__track {
+      --thumb: 18px;
+      position: relative;
+      height: 28px;
+      margin-top: 4px;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 6px;
+        border-radius: 100vw;
+        background: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
+        transform: translateY(-50%);
+      }
+    }
+
+    &__dots {
+      position: absolute;
+      inset: 0 calc(var(--thumb) / 2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      span {
+        width: 0;
+        display: flex;
+        justify-content: center;
+
+        &::before {
+          content: '';
+          flex: none;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.55);
+        }
+      }
+    }
+
+    &__slider {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+
+      &::-moz-range-track {
+        background: transparent;
+      }
+
+      &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: var(--thumb);
+        height: var(--thumb);
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      &::-moz-range-thumb {
+        width: var(--thumb);
+        height: var(--thumb);
+        border: 0;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    &__scale {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 9px;
+      font-family: var(--font-display);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+
+      span {
+        width: 0;
+        display: flex;
+        justify-content: center;
+      }
+    }
+  }
+
+  // Card styles follow the extension's src/styles/Timezone.scss
+  .tz {
+    --tz-c0: #3d83e5;
+    --tz-c1: #74b6e6;
+    --tz-c2: #b2d0f0;
+    position: relative;
+    display: grid;
+    grid-template:
+      'city time' auto
+      'footer footer' 20px / 1fr auto;
+    gap: 3px 4px;
+    margin: 0 0 6px;
+    padding-top: 6px;
+    color: #fff;
+    background: linear-gradient(180deg, var(--tz-c0) 0%, var(--tz-c1) 50%, var(--tz-c2) 100%);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow:
+      rgba(255, 255, 255, 0.1) 0 1px 0 0 inset,
+      rgba(7, 13, 79, 0.05) 0 0 20px 3px,
+      rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
+    transition:
+      --tz-c0 0.6s ease,
+      --tz-c1 0.6s ease,
+      --tz-c2 0.6s ease;
+
+    [data-converting] & {
+      transition-duration: 0.2s;
+    }
+
+    &[data-sky='night'] {
+      --tz-c0: #12111e;
+      --tz-c1: #1d1c27;
+      --tz-c2: #2a2933;
+    }
+    &[data-sky='dawn'] {
+      --tz-c0: #608ebb;
+      --tz-c1: #b994c3;
+      --tz-c2: #e8cba1;
+    }
+    &[data-sky='twilight'] {
+      --tz-c0: #102d58;
+      --tz-c1: #3e4f85;
+      --tz-c2: #df524e;
+    }
+
+    &__stars {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+
+      [data-sky='night'] & {
+        opacity: 1;
+      }
+
+      circle {
+        animation: twinkle 4s ease-in-out infinite;
+
+        &:nth-child(4n) {
+          animation-duration: 3.2s;
+          animation-delay: -0.8s;
+        }
+        &:nth-child(4n + 1) {
+          animation-duration: 5.1s;
+          animation-delay: -2.3s;
+        }
+        &:nth-child(4n + 2) {
+          animation-duration: 4.4s;
+          animation-delay: -1.5s;
+        }
+        &:nth-child(4n + 3) {
+          animation-duration: 3.8s;
+          animation-delay: -3.1s;
+        }
+      }
+    }
+
+    &__city {
+      grid-area: city;
+      position: relative;
+      padding: 4px 0 0 12px;
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    &__time {
+      grid-area: time;
+      position: relative;
+      padding-right: 26px;
+      font-family: var(--font-body);
+      font-size: 30px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    &__footer {
+      grid-area: footer;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 27px 6px 13px;
+      color: rgba(255, 255, 255, 0.85);
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    &__relative {
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    &__utc {
+      padding-left: 6px;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+
+    &__day,
+    &__week {
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 1px;
+        height: 64%;
+        background: #fff;
+        opacity: 0.3;
+        transform: translateY(-50%);
+      }
+    }
+
+    &__day {
+      display: inline-block;
+      padding-right: 12px;
+      color: #fff;
+      text-transform: none;
+
+      &::after {
+        right: 5px;
+      }
+
+      &[hidden] {
+        display: none;
+      }
+    }
+
+    &__week {
+      padding-right: 4px;
+
+      &::after {
+        right: -2px;
+      }
+    }
+
+    &__date {
+      padding-left: 7px;
+    }
+
+    &__month {
+      padding-left: 2px;
+    }
+  }
+
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.15;
+    }
+  }
+</style>
