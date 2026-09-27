@@ -138,8 +138,10 @@ svg {
     background: var(--color-blue);
     color: #fff;
 
+    // Darker on hover, not lighter: white text on #3f5fbf is 5.83:1 (the
+    // resting blue is 4.66:1), where the old lighter #5b7ee0 was only 3.81:1.
     &:hover {
-      background: #5b7ee0;
+      background: #3f5fbf;
     }
   }
 
