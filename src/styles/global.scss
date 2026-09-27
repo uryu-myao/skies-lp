@@ -26,6 +26,19 @@
   --radius-card: 22px;
 }
 
+// Japanese text (the /tokushoho page and its footer link). Lato and Poppins
+// have no kana or kanji, and a generic fallback can pick Chinese glyph forms,
+// so name Japanese fonts explicitly.
+$font-ja:
+  'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', YuGothic, Meiryo, 'Noto Sans JP',
+  'Noto Sans CJK JP', sans-serif;
+
+[lang='ja'] {
+  --font-display: 'Poppins', #{$font-ja};
+  --font-body: 'Lato', #{$font-ja};
+  font-family: var(--font-body);
+}
+
 *,
 *::before,
 *::after {
