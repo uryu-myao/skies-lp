@@ -250,7 +250,7 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
     margin: 0 18px 12px;
     padding: 12px 14px 10px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #202025;
 
     &__head {
       display: flex;
@@ -290,7 +290,7 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
     // The thumb's centre travels from half a thumb in at each end, so the
     // dots and the scale are inset by the same amount to line up with it.
     &__track {
-      --thumb: 18px;
+      --thumb: 20px;
       position: relative;
       height: 28px;
       margin-top: 4px;
@@ -301,9 +301,12 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
         top: 50%;
         left: 0;
         right: 0;
-        height: 6px;
+        height: 12px;
         border-radius: 100vw;
-        background: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
+        background: linear-gradient(90deg,
+    #23212a 0%,
+    #6d6891 50%,
+    #23212a 100%);
         transform: translateY(-50%);
       }
     }
@@ -393,7 +396,7 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
       'footer footer' 20px / 1fr auto;
     gap: 3px 4px;
     margin: 0 0 6px;
-    padding-top: 6px;
+    padding: 2px 0;
     color: #fff;
     background: linear-gradient(180deg, var(--tz-c0) 0%, var(--tz-c1) 50%, var(--tz-c2) 100%);
     border-radius: 22px;
