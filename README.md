@@ -25,13 +25,13 @@ Every push to `main` deploys to production. The `skies-lp` Worker in the Cloudfl
 - Analytics come from Umami Cloud (cookieless), through the script in `src/layouts/Base.astro`. `data-domains` limits tracking to `useskies.com`, so dev and preview visits aren't counted. Each Add to Chrome button sends an `add-to-chrome` event with a `location` of `nav`, `hero` or `cta`. If you change analytics, update the "This website" section of `/privacy`.
 - "Always Use HTTPS" is on for the zone (SSL/TLS → Edge Certificates), so plain `http://` requests get a 301 to `https://`.
 - [`public/_headers`](public/_headers) sets security headers, and long-lived caching for the hashed files in `/_astro/`.
-- Pages are built as `privacy.html` and served at clean URLs (`/privacy`). Unknown paths get `404.html`.
+- Pages are built as `privacy.html` and served at clean URLs (`/privacy`). Unknown paths get `404.html`. `/tokushoho` is submitted to Stripe, so keep that URL fixed.
 
 ## Structure
 
 ```text
 src/
-├── pages/            index, privacy, 404
+├── pages/            index, privacy, tokushoho (特定商取引法に基づく表記, Japanese), 404
 ├── layouts/Base.astro  <head>, meta and Open Graph tags, nav, footer
 ├── components/
 │   ├── PopupDemo.astro  live popup demo: the visitor's zone as Base, plus a converter

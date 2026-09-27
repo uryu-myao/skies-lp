@@ -1,0 +1,109 @@
+---
+import Base from '../layouts/Base.astro';
+
+// This URL (/tokushoho) is submitted to Stripe for review. Don't rename the file.
+
+const UPDATED = { iso: '2026-09-26', label: '2026年9月26日' };
+
+// Shown under the address and phone number, which individual sellers may
+// withhold until a buyer asks. Remove `note` from an item once it's published
+// in full. The email address must always be public, so it never gets one.
+const DISCLOSE_ON_REQUEST = '請求があったら遅滞なく開示します';
+
+const items: { term: string; value: string; note?: string }[] = [
+  { term: '販売事業者名', value: '[PLACEHOLDER]' },
+  { term: '運営統括責任者名', value: '[PLACEHOLDER]' },
+  { term: '所在地', value: '[PLACEHOLDER]', note: DISCLOSE_ON_REQUEST },
+  { term: '電話番号', value: '[PLACEHOLDER]', note: DISCLOSE_ON_REQUEST },
+  { term: 'メールアドレス', value: '[PLACEHOLDER]' },
+  { term: '販売価格', value: '各商品ページに表示された価格' },
+  { term: '商品代金以外の必要料金', value: 'なし' },
+  { term: '支払方法', value: 'クレジットカード' },
+  { term: '支払時期', value: '決済完了時' },
+  { term: '商品の引渡時期', value: '決済完了後ただちに' },
+  { term: '返品・キャンセル', value: 'デジタル商品の性質上、原則として返品・返金はお受けできません' },
+  { term: '動作環境', value: 'Google Chrome 最新版' },
+];
+---
+
+<Base
+  lang="ja"
+  title="特定商取引法に基づく表記 — Skies"
+  description="Chrome 拡張機能 Skies の特定商取引法に基づく表記です。"
+>
+  <article class="container tokushoho">
+    <h1>特定商取引法に基づく表記</h1>
+
+    <dl>
+      {
+        items.map(({ term, value, note }) => (
+          <div class="tokushoho__row">
+            <dt>{term}</dt>
+            <dd>
+              {value}
+              {note && <p class="tokushoho__note">{note}</p>}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <p class="tokushoho__updated">最終更新日：<time datetime={UPDATED.iso}>{UPDATED.label}</time></p>
+  </article>
+</Base>
+
+<style lang="scss">
+  .tokushoho {
+    max-width: calc(720px + var(--gutter) * 2);
+    padding-top: clamp(48px, 8vw, 88px);
+    padding-bottom: clamp(64px, 10vw, 112px);
+    line-height: 1.8;
+    // Break Japanese lines between phrases, not mid-word (Chrome 119+).
+    word-break: auto-phrase;
+
+    h1 {
+      margin-bottom: 32px;
+      font-size: clamp(26px, 5vw, 36px);
+      letter-spacing: 0;
+    }
+
+    dl {
+      margin: 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    dt {
+      font-weight: 700;
+    }
+
+    dd {
+      margin: 0;
+      color: var(--color-text-muted);
+      overflow-wrap: anywhere;
+    }
+
+    &__row {
+      display: grid;
+      gap: 2px 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-border);
+
+      // Term and value side by side on wider screens, stacked on phones.
+      @media (min-width: 640px) {
+        grid-template-columns: 12em 1fr;
+      }
+    }
+
+    &__note {
+      margin-top: 2px;
+      font-size: 14px;
+      color: var(--color-text-faint);
+    }
+
+    &__updated {
+      margin-top: 32px;
+      font-size: 14px;
+      color: var(--color-text-muted);
+    }
+  }
+</style>
