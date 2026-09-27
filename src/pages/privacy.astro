@@ -10,7 +10,7 @@ import { CONTACT_EMAIL, FEEDBACK_URL } from '../lib/links';
   <article class="container legal">
     <p class="eyebrow">Legal</p>
     <h1>Privacy Policy</h1>
-    <p class="legal__updated">Last updated: September 24, 2026</p>
+    <p class="legal__updated">Last updated: September 27, 2026</p>
 
     <p>
       Skies is a world clock extension for Chrome. It doesn't have accounts, doesn't collect analytics, and doesn't
@@ -49,6 +49,19 @@ import { CONTACT_EMAIL, FEEDBACK_URL } from '../lib/links';
       Filling it in is optional. Anything you submit is collected by Google Forms and read by us to improve Skies.
     </p>
 
+    <h2 id="pro-updates">Pro launch email</h2>
+    <p>
+      If you sign up on the <a href="/pro">Skies Pro page</a> to hear when Pro is ready, your email address is collected
+      and stored by <a href="https://buttondown.com/">Buttondown</a>, a third-party email service, under its{' '}
+      <a href="https://buttondown.com/legal/privacy">privacy policy</a>. Buttondown first sends an email asking you to
+      confirm the sign-up.
+    </p>
+    <p>
+      We use your address only to tell you when Skies Pro is available. Every email has an unsubscribe link, and you can
+      unsubscribe at any time, or ask us to delete your address by emailing{' '}
+      <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+    </p>
+
     <h2>This website</h2>
     <p>
       useskies.com uses <a href="https://umami.is/">Umami</a> to count visits. Umami doesn't set cookies or collect
@@ -82,6 +95,8 @@ import { CONTACT_EMAIL, FEEDBACK_URL } from '../lib/links';
     h2 {
       margin: 40px 0 12px;
       font-size: 22px;
+      // Clear the sticky nav when linked to (/privacy#pro-updates).
+      scroll-margin-top: 88px;
     }
 
     p,

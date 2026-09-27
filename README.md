@@ -23,6 +23,7 @@ Every push to `main` deploys to production. The `skies-lp` Worker in the Cloudfl
 - The custom domain `useskies.com` is declared in `routes`, and Cloudflare manages its DNS record.
 - `www.useskies.com` is not part of the Worker. It lives in the Cloudflare dashboard as a proxied placeholder DNS record (`A 192.0.2.1`) plus a Redirect Rule ("Redirect www to useskies.com") that sends a 301 to `https://useskies.com`, keeping the path and query string.
 - Analytics come from Umami Cloud (cookieless), through the script in `src/layouts/Base.astro`. `data-domains` limits tracking to `useskies.com`, so dev and preview visits aren't counted. Each Add to Chrome button sends an `add-to-chrome` event with a `location` of `nav`, `hero` or `cta`. If you change analytics, update the "This website" section of `/privacy`.
+- The "Notify me" form on `/pro` posts to Buttondown (account `uryu`, set in `src/lib/notify.ts`), which handles confirmation emails and unsubscribes. The submit button also sends a `pro-notify` Umami event. If the form moves to another service, update the "Pro launch email" section of `/privacy`.
 - "Always Use HTTPS" is on for the zone (SSL/TLS → Edge Certificates), so plain `http://` requests get a 301 to `https://`.
 - [`public/_headers`](public/_headers) sets security headers, and long-lived caching for the hashed files in `/_astro/`.
 - Pages are built as `privacy.html` and served at clean URLs (`/privacy`). Unknown paths get `404.html`. `/tokushoho` is submitted to Stripe, so keep that URL fixed.
@@ -31,7 +32,7 @@ Every push to `main` deploys to production. The `skies-lp` Worker in the Cloudfl
 
 ```text
 src/
-├── pages/            index, privacy, tokushoho (特定商取引法に基づく表記, Japanese), 404
+├── pages/            index, pro, privacy, tokushoho (特定商取引法に基づく表記, Japanese), 404
 ├── layouts/Base.astro  <head>, meta and Open Graph tags, nav, footer
 ├── components/
 │   ├── PopupDemo.astro  live popup demo: the visitor's zone as Base, plus a converter
@@ -40,7 +41,8 @@ src/
 │   └── Footer.astro
 ├── lib/
 │   ├── tz.ts         gap, UTC offset and sky logic, ported from the extension
-│   └── links.ts      Chrome Web Store, feedback form, contact email
+│   ├── links.ts      Chrome Web Store, feedback form, contact email
+│   └── notify.ts     where the /pro "Notify me" form posts
 └── styles/global.scss  design tokens and shared styles
 ```
 

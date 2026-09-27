@@ -1,0 +1,418 @@
+---
+import Base from '../layouts/Base.astro';
+import { NOTIFY_FORM } from '../lib/notify';
+
+// Pro isn't on sale yet: nothing on this page may read as a way to buy it.
+// The extension will open this page from its Pro settings.
+
+// Set to the price as it should read, e.g. '[PRICE_PLACEHOLDER]', once decided.
+const PRICE: string | null = null;
+
+const workHours = [
+  { city: 'Tokyo', hours: '9:00–18:00', days: [1, 2, 3, 4, 5] },
+  { city: 'Berlin', hours: '8:00–16:00', days: [1, 2, 3, 4, 5] },
+  { city: 'Tel Aviv', hours: '9:00–18:00', days: [0, 1, 2, 3, 4] },
+];
+const dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+// The same three cities on a Tokyo clock, in summer: everyone overlaps
+// 15:00–18:00, Monday to Thursday. Friday is Tel Aviv's weekend.
+const week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => ({
+  day,
+  overlap: i < 4 ? { from: 15, to: 18 } : null,
+}));
+// Each lane shows 8:00–24:00.
+const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
+---
+
+<Base
+  title="Skies Pro — Coming Soon"
+  description="Skies Pro is coming soon to the Skies Chrome extension: custom work hours per city, a weekly Core Time view, and DST alerts. A one-time purchase, no subscription."
+>
+  <section class="container pro-hero">
+    <p class="eyebrow">World clock for Chrome</p>
+    <h1>Skies Pro</h1>
+    <p class="pro-hero__lede">Coming soon — one-time purchase, no subscription.</p>
+    <p class="pro-hero__note">Pro adds three features to the Skies Chrome extension. It isn't available yet.</p>
+    <a class="button button--primary pro-hero__action" href="#notify">Notify me when it's ready</a>
+  </section>
+
+  <section class="container included" aria-labelledby="included-title">
+    <h2 id="included-title" class="visually-hidden">What's included</h2>
+    <div class="included__grid">
+      <article class="item">
+        <!-- Illustration until there's a screenshot. Swap the div for an <img> with alt text. -->
+        <div class="item__visual" aria-hidden="true">
+          <div class="hours">
+            {
+              workHours.map((row) => (
+                <span class="hours__row">
+                  <span class="hours__city">{row.city}</span>
+                  <span class="hours__time">{row.hours}</span>
+                  <span class="hours__days">
+                    {dayLetters.map((d, i) => (
+                      <span class:list={['hours__day', { 'hours__day--on': row.days.includes(i) }]}>{d}</span>
+                    ))}
+                  </span>
+                </span>
+              ))
+            }
+          </div>
+        </div>
+        <h3>Custom work hours per city</h3>
+        <p>Set each city's own working hours and days. One shared default can't fit every city.</p>
+      </article>
+
+      <article class="item">
+        <div class="item__visual" aria-hidden="true">
+          <div class="week">
+            {
+              week.map((d) => (
+                <span class="week__col">
+                  <span class="week__lane">
+                    {d.overlap && (
+                      <span
+                        class="week__overlap"
+                        style={`top:${lanePct(d.overlap.from - 8)};height:${lanePct(d.overlap.to - d.overlap.from)}`}
+                      />
+                    )}
+                  </span>
+                  <span class="week__day">{d.day}</span>
+                </span>
+              ))
+            }
+          </div>
+        </div>
+        <h3>Weekly Core Time view</h3>
+        <p>See the whole week at once, not just today.</p>
+      </article>
+
+      <article class="item">
+        <div class="item__visual" aria-hidden="true">
+          <div class="dst">
+            <span class="dst__when">In 9 days (Nov 1), Boston shifts to EST.</span>
+            <span class="dst__gap">Your gap <b>−13h</b> → <b>−14h</b></span>
+          </div>
+        </div>
+        <h3>DST alerts</h3>
+        <p>Get told before a time change shifts your gap — including when the other side changes and you don't.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="panel">
+      <div class="panel__pricing">
+        <p class="eyebrow">Pricing</p>
+        <h2>{PRICE ?? 'Pricing to be announced'}</h2>
+        <p>One-time purchase. No subscription.</p>
+        <p>Everything that's free today stays free.</p>
+      </div>
+
+      <div class="panel__notify" id="notify">
+        <h2>Notify me</h2>
+        <p>Get an email when Pro is ready. Nothing else.</p>
+        <form class="notify" method="post" action={NOTIFY_FORM?.action} target="_blank">
+          <fieldset disabled={!NOTIFY_FORM}>
+            <label class="visually-hidden" for="notify-email">Email address</label>
+            <input
+              id="notify-email"
+              type="email"
+              name={NOTIFY_FORM?.emailField ?? 'email'}
+              autocomplete="email"
+              placeholder="you@example.com"
+              required
+            />
+            {
+              Object.entries(NOTIFY_FORM?.extraFields ?? {}).map(([name, value]) => (
+                <input type="hidden" name={name} value={value} />
+              ))
+            }
+            <button class="button button--primary" type="submit" data-umami-event="pro-notify">Notify me</button>
+          </fieldset>
+        </form>
+        <p class="notify__status" role="status">{!NOTIFY_FORM && 'Sign-up opens soon.'}</p>
+        <p class="notify__fine">Sent through Buttondown. Unsubscribe any time. <a href="/privacy#pro-updates">Privacy policy</a></p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // The form posts to Buttondown in a new tab, and Buttondown's page takes it
+  // from there: a CAPTCHA when it asks for one, then success, "already
+  // subscribed" or an address error. Its docs rule out posting with fetch,
+  // which would swallow that page. This only points people to the new tab.
+  const form = document.querySelector<HTMLFormElement>('form.notify');
+  const status = document.querySelector<HTMLElement>('.notify__status');
+
+  form?.addEventListener('submit', () => {
+    if (status) status.textContent = "Check the Buttondown tab that just opened. Once you're signed up, confirm from the email it sends.";
+  });
+</script>
+
+<style lang="scss">
+  .pro-hero {
+    padding-top: clamp(40px, 6vw, 72px);
+    padding-bottom: clamp(28px, 4vw, 44px);
+
+    h1 {
+      margin: 12px 0 12px;
+      font-size: clamp(38px, 6vw, 60px);
+    }
+
+    &__lede {
+      font-size: clamp(17px, 1.6vw, 19px);
+    }
+
+    &__note {
+      margin-top: 4px;
+      color: var(--color-text-muted);
+    }
+
+    &__action {
+      margin-top: 24px;
+    }
+  }
+
+  .included__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 20px;
+  }
+
+  // Same card as the home page's features.
+  .item {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 26px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+
+    h3 {
+      margin: 22px 4px 8px;
+      font-size: 20px;
+    }
+
+    p {
+      margin: 0 4px;
+      font-size: 16px;
+      color: var(--color-text-muted);
+    }
+
+    &__visual {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 148px;
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--color-surface-raised);
+      overflow: hidden;
+    }
+  }
+
+  .hours {
+    display: grid;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+
+    &__row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      white-space: nowrap;
+    }
+
+    &__time {
+      color: var(--color-text-muted);
+    }
+
+    &__days {
+      display: flex;
+      gap: 2px;
+    }
+
+    &__day {
+      width: 12px;
+      font-size: 10px;
+      text-align: center;
+      color: var(--color-text-faint);
+
+      &--on {
+        color: var(--color-logo-bottom);
+      }
+    }
+  }
+
+  .week {
+    display: flex;
+    gap: 8px;
+    height: 100%;
+
+    &__col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    &__lane {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    // Orange is reserved for Core Time, as in the extension.
+    &__overlap {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border: 2px solid var(--color-core);
+      border-radius: 8px;
+    }
+
+    &__day {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+    }
+  }
+
+  .dst {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 500;
+
+    &__gap {
+      color: var(--color-text-muted);
+
+      b {
+        color: var(--color-logo-bottom);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .panel {
+    display: grid;
+    gap: 32px 64px;
+    margin: 20px 0 clamp(64px, 10vw, 112px);
+    padding: clamp(28px, 5vw, 48px);
+    border-radius: 28px;
+    background:
+      radial-gradient(120% 140% at 0% 0%, rgba(64, 121, 200, 0.22), transparent 60%),
+      var(--color-surface);
+    border: 1px solid var(--color-border);
+
+    h2 {
+      margin: 12px 0 12px;
+      font-size: clamp(26px, 3.2vw, 32px);
+    }
+
+    p:not(.eyebrow) {
+      color: var(--color-text-muted);
+    }
+
+    &__notify {
+      scroll-margin-top: 88px;
+
+      h2 {
+        margin-top: 0;
+      }
+    }
+  }
+
+  @media (min-width: 860px) {
+    .panel {
+      grid-template-columns: 1fr 1.1fr;
+      align-items: start;
+
+      // The eyebrow on the pricing side pushes its heading down; line the two up.
+      &__notify h2 {
+        margin-top: calc(13px * 1.6 + 12px);
+      }
+    }
+  }
+
+  .notify {
+    margin-top: 20px;
+
+    fieldset {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+
+      &:disabled {
+        opacity: 0.55;
+      }
+    }
+
+    input[type='email'] {
+      flex: 1 1 220px;
+      min-width: 0;
+      min-height: 48px;
+      padding: 0 20px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 100vw;
+      background: var(--color-surface-raised);
+      color: var(--color-text);
+      font: inherit;
+      font-size: 16px;
+
+      &::placeholder {
+        color: var(--color-text-muted);
+      }
+
+      &:focus-visible {
+        outline-offset: 2px;
+      }
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+
+      &:disabled {
+        cursor: default;
+      }
+    }
+
+    &__status {
+      margin-top: 12px;
+      font-size: 15px;
+
+      &:empty {
+        display: none;
+      }
+    }
+
+    &__fine {
+      margin-top: 12px;
+      font-size: 14px;
+
+      a {
+        color: var(--color-logo-bottom);
+      }
+    }
+  }
+</style>
