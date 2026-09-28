@@ -5,8 +5,11 @@ import { NOTIFY_FORM } from '../lib/notify';
 // Pro isn't on sale yet: nothing on this page may read as a way to buy it.
 // The extension will open this page from its Pro settings.
 
-// Set to the price as it should read, e.g. '[PRICE_PLACEHOLDER]', once decided.
-const PRICE: string | null = null;
+// The price is set here only: /tokushoho says 販売価格 is "the price shown on
+// each product page", so a price change never touches the legal page. USD
+// only: a yen price would have to be shown tax-inclusive, and Stripe Checkout
+// already shows buyers their local currency.
+const PRICE: string | null = '$4.99';
 
 const workHours = [
   { city: 'Tokyo', hours: '9:00–18:00', days: [1, 2, 3, 4, 5] },
@@ -104,7 +107,15 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
     <div class="panel">
       <div class="panel__pricing">
         <p class="eyebrow">Pricing</p>
-        <h2>{PRICE ?? 'Pricing to be announced'}</h2>
+        {
+          PRICE ? (
+            <h2>
+              {PRICE} <span class="panel__currency">USD</span>
+            </h2>
+          ) : (
+            <h2>Pricing to be announced</h2>
+          )
+        }
         <p>One-time purchase. No subscription.</p>
         <p>Everything that's free today stays free.</p>
       </div>
@@ -327,6 +338,13 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
     }
 
     p:not(.eyebrow) {
+      color: var(--color-text-muted);
+    }
+
+    &__currency {
+      font-size: 0.5em;
+      font-weight: 600;
+      letter-spacing: 0.04em;
       color: var(--color-text-muted);
     }
 

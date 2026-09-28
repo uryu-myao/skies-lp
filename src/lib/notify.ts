@@ -3,7 +3,7 @@
 // tab, never fetch (see the script in pro.astro). While this is null the form
 // is shown disabled, so nobody signs up into nothing.
 //
-// Buttondown is named on /privacy ("Pro launch email"). Update that section if
+// Buttondown is named on /privacy ("Email updates"). Update that section if
 // the form ever posts somewhere else.
 export interface NotifyForm {
   action: string;
