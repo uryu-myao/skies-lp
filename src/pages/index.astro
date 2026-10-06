@@ -2,30 +2,36 @@
 import Base from '../layouts/Base.astro';
 import PopupDemo from '../components/PopupDemo.astro';
 import Features from '../components/Features.astro';
-import { STORE_URL } from '../lib/links';
+import InstallButtons from '../components/InstallButtons.astro';
+
+// The screenshot of Firefox's install prompt (dark theme, to match the page).
+// Its width and height hold its space while it loads. While this is null the
+// figure is left out of the build, and the dev server shows a dashed
+// placeholder in its place.
+interface Screenshot {
+  src: string;
+  width: number;
+  height: number;
+}
+// `as`, so TypeScript doesn't narrow it to null and reject the <img> branch.
+const FIREFOX_PROMPT = null as Screenshot | null;
 ---
 
 <Base
-  title="Skies — World Clock & Time Zones for Chrome"
-  description="Skies keeps up to 10 cities in one Chrome popup. Each shows its gap from your own time, with a time converter and a Core Time view of everyone's working hours."
+  title="Skies — World Clock & Time Zones"
+  description="Skies keeps up to 30 cities in one browser popup. Each shows its gap from your own time under the color of its sky, with a time converter and a Core Time view of everyone's working hours. For Chrome and Firefox."
 >
   <section class="hero">
     <div class="container hero__inner">
       <div class="hero__copy">
-        <p class="eyebrow">World clock for Chrome</p>
+        <p class="eyebrow">World clock browser extension</p>
         <h1>Every time zone, measured from yours.</h1>
         <p class="hero__lede">
           Skies keeps your cities in one popup. Each one shows its gap from your time, like −13h or +3:30h, under
           the color of its sky right now.
         </p>
         <div class="hero__actions">
-          <a
-            class="button button--primary"
-            href={STORE_URL}
-            data-umami-event="add-to-chrome"
-            data-umami-event-location="hero">Add to Chrome</a
-          >
-          <a class="button button--ghost" href="#features">See features</a>
+          <InstallButtons location="hero" id="install" />
         </div>
       </div>
       <div class="hero__demo">
@@ -42,8 +48,29 @@ import { STORE_URL } from '../lib/links';
         <div>
           <p class="eyebrow">Privacy</p>
           <h2>Your cities stay on your device.</h2>
+          {(FIREFOX_PROMPT || import.meta.env.DEV) && (
+          <figure class="privacy__shot">
+            {
+              FIREFOX_PROMPT ? (
+                <img
+                  src={FIREFOX_PROMPT.src}
+                  width={FIREFOX_PROMPT.width}
+                  height={FIREFOX_PROMPT.height}
+                  alt="Firefox's prompt when adding Skies, with no permissions listed."
+                  loading="lazy"
+                />
+              ) : (
+                <div class="privacy__placeholder">Screenshot: Firefox install prompt</div>
+              )
+            }
+            <figcaption>What Firefox shows when you add Skies: no permissions to approve.</figcaption>
+          </figure>
+          )}
         </div>
         <ul>
+          <li>
+            <b>Works offline.</b> Nothing is fetched from the internet — not city search, not sky colors, not fonts.
+          </li>
           <li><b>No account.</b> Install it and add a city. That's the whole setup.</li>
           <li><b>No tracking, no ads.</b> The extension doesn't collect analytics.</li>
           <li>
@@ -59,12 +86,7 @@ import { STORE_URL } from '../lib/links';
     <div class="container cta__inner">
       <img src="/favicon.svg" alt="" width="56" height="56" />
       <h2>Know the time, wherever your team is.</h2>
-      <a
-        class="button button--primary"
-        href={STORE_URL}
-        data-umami-event="add-to-chrome"
-        data-umami-event-location="cta">Add to Chrome</a
-      >
+      <InstallButtons location="cta" align="center" />
     </div>
   </section>
 </Base>
@@ -97,9 +119,6 @@ import { STORE_URL } from '../lib/links';
     }
 
     &__actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
       margin-top: 32px;
     }
   }
@@ -143,6 +162,39 @@ import { STORE_URL } from '../lib/links';
       a {
         color: var(--color-logo-bottom);
       }
+    }
+
+    &__shot {
+      margin: 28px 0 0;
+
+      img,
+      .privacy__placeholder {
+        width: 100%;
+        max-width: 420px;
+        height: auto;
+        border-radius: 14px;
+      }
+
+      img {
+        border: 1px solid var(--color-border);
+      }
+
+      figcaption {
+        margin-top: 10px;
+        font-size: 14px;
+        color: var(--color-text-faint);
+      }
+    }
+
+    // Holds the screenshot's place in development until it's in.
+    &__placeholder {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 4 / 3;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      background: var(--color-surface-raised);
+      font-size: 14px;
+      color: var(--color-text-faint);
     }
   }
 

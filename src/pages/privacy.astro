@@ -5,42 +5,53 @@ import { CONTACT_EMAIL, FEEDBACK_URL } from '../lib/links';
 
 <Base
   title="Privacy Policy — Skies"
-  description="How the Skies Chrome extension and useskies.com handle your data: no account, no tracking in the extension, and your cities stay in your browser."
+  description="How the Skies browser extension and useskies.com handle your data: no account, no data collected, no network requests from the extension, and your cities stay in your browser."
 >
   <article class="container legal">
     <p class="eyebrow">Legal</p>
     <h1>Privacy Policy</h1>
-    <p class="legal__updated">Last updated: September 28, 2026</p>
+    <p class="legal__updated">Last updated: October 6, 2026</p>
 
     <p>
-      Skies is a world clock extension for Chrome. It doesn't have accounts, doesn't collect analytics, and doesn't
-      sell or share personal data. This page covers what the extension stores and which outside services it contacts.
+      Skies is a world clock extension for Chrome and Firefox. It doesn't have accounts, doesn't collect analytics,
+      and doesn't sell or share personal data. This page covers what the extension stores, the permissions it asks
+      for, and what this website records.
     </p>
 
     <h2>What stays on your device</h2>
     <p>
-      Your city list, any names you give cities, their order, and your settings are saved in your browser's local
-      storage. Skies also caches each city's sunrise and sunset times for the day. None of this is sent to us, and it's
-      removed when you uninstall the extension.
+      Your city list, any names you give cities, their order, and your settings are saved locally in your browser. None
+      of this is sent to us, and it's removed when you uninstall the extension.
     </p>
 
-    <h2>Services Skies contacts</h2>
+    <h2>Network requests</h2>
+    <p>
+      Since version 3.2.0, Skies makes no network requests. City search, sky colors, flags and fonts are all built into
+      the extension. Links you choose in its settings, such as Rate or Send Feedback, open in a browser tab.
+    </p>
+    <p>Versions before 3.2.0, which were available only for Chrome, contacted these services:</p>
     <ul>
       <li>
-        <b>City search.</b> The text you type in search is sent to the{' '}
+        <b>City search.</b> The text you typed in search was sent to the{' '}
         <a href="https://open-meteo.com/">Open-Meteo Geocoding API</a> to find matching cities.
       </li>
       <li>
-        <b>Sunrise and sunset.</b> The coordinates and time zone of each city you add are sent to the Open-Meteo
+        <b>Sunrise and sunset.</b> The coordinates and time zone of each city you added were sent to the Open-Meteo
         Forecast API, about once a day, to pick the color of its card.
       </li>
       <li>
-        <b>Flags.</b> Country flags in search results load from flagcdn.com.
+        <b>Flags.</b> Country flags in search results loaded from flagcdn.com.
       </li>
     </ul>
     <p>
-      These requests don't carry any identifier from Skies. As with any web request, these providers can see your IP
+      These requests didn't carry any identifier from Skies. As with any web request, these providers could see your IP
       address.
+    </p>
+
+    <h2>Permissions</h2>
+    <p>
+      On Chrome, Skies requests no permissions. On Firefox, it requests only the storage permission, which keeps your
+      city list in the browser's extension storage. Firefox doesn't show a prompt for it.
     </p>
 
     <h2>Feedback</h2>

@@ -1,4 +1,6 @@
 ---
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import '../styles/global.scss';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
@@ -7,11 +9,22 @@ interface Props {
   title: string;
   description: string;
   lang?: string;
+  // For pages search engines shouldn't list, like the 404 page.
+  noindex?: boolean;
 }
 
-const { title, description, lang = 'en' } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = new URL('/logo-240.png', Astro.site);
+const { title, description, lang = 'en', noindex = false } = Astro.props;
+
+// Pages build as privacy.html but are served at /privacy (the .html address
+// redirects there), so canonical and og:url name the clean URL.
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/');
+const canonical = new URL(path, Astro.site);
+
+// The 1200×630 share image, once public/og.png exists. Until then, the logo
+// and Twitter's small card. The build runs from the project root.
+const hasShareImage = existsSync(join(process.cwd(), 'public', 'og.png'));
+const ogImage = new URL(hasShareImage ? '/og.png' : '/logo-240.png', Astro.site);
+const ogImageAlt = 'Skies: city clocks, each under the color of its sky, with the gap from your time.';
 ---
 
 <!doctype html>
@@ -21,8 +34,27 @@ const ogImage = new URL('/logo-240.png', Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
     <meta name="theme-color" content="#111017" />
+
+    <!--
+      Which store leads the install buttons (InstallButtons.astro, Nav.astro).
+      Set before the first paint, so nothing moves. Phones and Safari get
+      "other": Skies is a desktop extension for Chrome-based browsers and Firefox.
+    -->
+    <script is:inline>
+      (() => {
+        const ua = navigator.userAgent;
+        const mobile = /Android|iPhone|iPad|iPod|Mobi/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        document.documentElement.dataset.browser = mobile
+          ? 'other'
+          : /Firefox\//.test(ua)
+            ? 'firefox'
+            : /Chrome\//.test(ua)
+              ? 'chromium'
+              : 'other';
+      })();
+    </script>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -33,9 +65,21 @@ const ogImage = new URL('/logo-240.png', Astro.site);
     <meta property="og:site_name" content="Skies" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={ogImage} />
-    <meta name="twitter:card" content="summary" />
+    {
+      hasShareImage ? (
+        <>
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={ogImageAlt} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image:alt" content={ogImageAlt} />
+        </>
+      ) : (
+        <meta name="twitter:card" content="summary" />
+      )
+    }
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

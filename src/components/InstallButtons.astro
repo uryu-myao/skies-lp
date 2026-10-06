@@ -1,0 +1,105 @@
+---
+import { FIREFOX_URL, STORE_URL } from '../lib/links';
+
+interface Props {
+  // Sent with each click as Umami's `location` (see README → Analytics).
+  location: 'hero' | 'cta';
+  id?: string;
+  align?: 'start' | 'center';
+}
+
+const { location, id, align = 'start' } = Astro.props;
+
+const chrome = { url: STORE_URL, label: 'Add to Chrome', event: 'add-to-chrome' };
+const firefox = { url: FIREFOX_URL, label: 'Add to Firefox', event: 'add-to-firefox' };
+---
+
+<!--
+  Both stores, always. The script in Base.astro's <head> sets
+  <html data-browser> before the first paint, and the CSS below picks which
+  copy of the pair to show: Firefox first for Firefox, Chrome first for
+  everything else. Two copies rather than CSS `order`, so the tab order
+  matches what's on screen. Same-size buttons, so nothing moves.
+-->
+<div class:list={['install', `install--${align}`]} id={id}>
+  {
+    [
+      { order: 'chrome-first', pair: [chrome, firefox] },
+      { order: 'firefox-first', pair: [firefox, chrome] },
+    ].map(({ order, pair }) => (
+      <div class:list={['install__buttons', `install__buttons--${order}`]}>
+        {pair.map((store, i) => (
+          <a
+            class:list={['button', i === 0 ? 'button--primary' : 'button--ghost']}
+            href={store.url}
+            data-umami-event={store.event}
+            data-umami-event-location={location}
+          >
+            {store.label}
+          </a>
+        ))}
+      </div>
+    ))
+  }
+  <p class="install__note">Free desktop extension for Chrome, Edge, Brave, Arc and Firefox 140+.</p>
+</div>
+
+<style lang="scss">
+  .install {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    // Clear the sticky nav when the nav's "Get Skies" links here (/#install).
+    scroll-margin-top: 120px;
+
+    &--center {
+      align-items: center;
+      text-align: center;
+
+      .install__buttons {
+        justify-content: center;
+      }
+    }
+
+    &__buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+
+      &--firefox-first {
+        display: none;
+      }
+    }
+
+    &__note {
+      font-size: 14px;
+      color: var(--color-text-faint);
+    }
+  }
+
+  :global(html[data-browser='firefox']) {
+    .install__buttons--chrome-first {
+      display: none;
+    }
+
+    .install__buttons--firefox-first {
+      display: flex;
+    }
+  }
+
+  // Safari and phones: neither store is theirs, so neither button leads, and
+  // the note saying it's a desktop extension comes forward.
+  :global(html[data-browser='other']) {
+    .install .button--primary {
+      background: rgba(255, 255, 255, 0.06);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+    }
+
+    .install__note {
+      color: var(--color-text);
+    }
+  }
+</style>

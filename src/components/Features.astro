@@ -1,10 +1,5 @@
 ---
-const skies = [
-  { name: 'Night', c: ['#12111e', '#1d1c27', '#2a2933'] },
-  { name: 'Dawn', c: ['#608ebb', '#b994c3', '#e8cba1'] },
-  { name: 'Day', c: ['#3d83e5', '#74b6e6', '#b2d0f0'] },
-  { name: 'Twilight', c: ['#102d58', '#3e4f85', '#df524e'] },
-];
+const skies = ['Night', 'Dawn', 'Day', 'Twilight'];
 
 // Working hours on a Tokyo clock: Tokyo 9–18, Singapore 9–18 (10–19 here),
 // Berlin in winter 9–18 (16–01 here). Everyone overlaps 16:00–18:00.
@@ -25,6 +20,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       <p>Everything opens from one click on the toolbar, and nothing gets in the way of reading the time.</p>
     </header>
 
+    <!-- Skies and Core Time lead: on a three-column screen they share the first row with Gaps. -->
     <div class="features__grid">
       <article class="feature">
         <div class="feature__visual">
@@ -47,32 +43,20 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       <article class="feature">
         <div class="feature__visual feature__visual--skies">
           {
-            skies.map((s) => (
-              <span class="sky" style={`--c0:${s.c[0]};--c1:${s.c[1]};--c2:${s.c[2]}`}>
-                {s.name}
-              </span>
-            ))
+            skies.map((name) => {
+              const sky = name.toLowerCase();
+              return (
+                <span class="sky" style={`--c0:var(--sky-${sky}-0);--c1:var(--sky-${sky}-1);--c2:var(--sky-${sky}-2)`}>
+                  {name}
+                </span>
+              );
+            })
           }
         </div>
         <h3>A sky for every city</h3>
         <p>
-          Cards take on the color of each city's sky right now: night, dawn, day, or twilight, timed to its local
-          sunrise and sunset.
-        </p>
-      </article>
-
-      <article class="feature">
-        <div class="feature__visual">
-          <div class="mini-slider" aria-hidden="true">
-            <span class="mini-slider__rail"></span>
-            <span class="mini-slider__thumb"></span>
-          </div>
-          <div class="mini-slider__scale" aria-hidden="true"><span>00</span><span>12</span><span>24</span></div>
-        </div>
-        <h3>Time converter</h3>
-        <p>
-          Drag one slider across 24 hours and every city moves with it. Find a slot that works before you send the
-          invite.
+          Cards take on the color of each city's sky right now — night, dawn, day, or twilight — worked out from where
+          the sun actually is, so even the midnight sun looks right.
         </p>
       </article>
 
@@ -97,21 +81,23 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
         </div>
         <h3>Core Time</h3>
         <p>
-          See when everyone's working hours overlap. When there's no overlap today, Skies shows you when the next one
-          is.
+          See when everyone's working hours overlap. No overlap today? Skies suggests the closest time. Someone off
+          today? It shows when the next overlap is.
         </p>
       </article>
 
       <article class="feature">
-        <div class="feature__visual feature__visual--dst">
-          <span><em>January</em> Berlin <b>−8h</b></span>
-          <span><em>July</em> Berlin <b>−7h</b></span>
-          <small>From Tokyo</small>
+        <div class="feature__visual">
+          <div class="mini-slider" aria-hidden="true">
+            <span class="mini-slider__rail"></span>
+            <span class="mini-slider__thumb"></span>
+          </div>
+          <div class="mini-slider__scale" aria-hidden="true"><span>00</span><span>12</span><span>24</span></div>
         </div>
-        <h3>Daylight saving, handled</h3>
+        <h3>Time converter</h3>
         <p>
-          Gaps are worked out for the moment you're looking at, never cached. When a city changes its clocks, Skies
-          shows it the same day.
+          Drag one slider across 24 hours and every city moves with it. Find a slot that works before you send the
+          invite.
         </p>
       </article>
 
@@ -129,8 +115,21 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
         </div>
         <h3>Your list, your way</h3>
         <p>
-          Search for up to 10 cities, give them your own names, and reorder them by drag or keyboard. Removed one by
-          mistake? Undo.
+          Add up to 30 cities — search in English, Chinese or Japanese, or by an older name like Bangalore. Give them
+          your own names and reorder them by drag or keyboard. Removed one by mistake? Undo.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual feature__visual--dst">
+          <span><em>January</em> Berlin <b>−8h</b></span>
+          <span><em>July</em> Berlin <b>−7h</b></span>
+          <small>From Tokyo</small>
+        </div>
+        <h3>Daylight saving, handled</h3>
+        <p>
+          Gaps are worked out for the moment you're looking at, never cached. When a city changes its clocks, Skies
+          shows it the same day.
         </p>
       </article>
     </div>
@@ -261,12 +260,12 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     }
 
     &--night {
-      background: linear-gradient(180deg, #12111e, #2a2933);
+      background: linear-gradient(180deg, var(--sky-night-0), var(--sky-night-2));
       box-shadow: rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
     }
 
     &--day {
-      background: linear-gradient(180deg, #3d83e5, #b2d0f0);
+      background: linear-gradient(180deg, var(--sky-day-0), var(--sky-day-2));
     }
   }
 

@@ -1,16 +1,17 @@
 ---
 import { cardView, makeStars, type City } from '../lib/tz';
 
-// What visitors without JavaScript see: 09:30 on a Thursday in Tokyo, which
-// puts the other cities under night and twilight skies. The script below
-// swaps in the visitor's own time zone as Base and keeps the cards live.
-const SNAPSHOT = new Date('2026-09-24T00:30:00Z');
+// What visitors without JavaScript see: 11:00 on a Thursday in Tokyo, which
+// puts London and New York under night skies and San Francisco (19:00) under
+// twilight. The script below swaps in the visitor's own time zone as Base and
+// keeps the cards live.
+const SNAPSHOT = new Date('2026-09-24T02:00:00Z');
 const REFERENCE = 'Asia/Tokyo';
 const CITIES: City[] = [
-  { city: 'Tokyo', zone: 'Asia/Tokyo' },
-  { city: 'London', zone: 'Europe/London' },
-  { city: 'New York', zone: 'America/New_York' },
-  { city: 'San Francisco', zone: 'America/Los_Angeles' },
+  { city: 'Tokyo', zone: 'Asia/Tokyo', lat: 35.69, lon: 139.69 },
+  { city: 'London', zone: 'Europe/London', lat: 51.51, lon: -0.13 },
+  { city: 'New York', zone: 'America/New_York', lat: 40.71, lon: -74.01 },
+  { city: 'San Francisco', zone: 'America/Los_Angeles', lat: 37.77, lon: -122.42 },
 ];
 const cards = CITIES.map((c) => ({ ...cardView(c, REFERENCE, SNAPSHOT), stars: makeStars(c.zone) }));
 const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
@@ -41,7 +42,7 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
           min="0"
           max="48"
           step="1"
-          value="19"
+          value="22"
           aria-label="Pick a time in your time zone"
           data-converter
         />
@@ -87,12 +88,14 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
 <script>
   import { cardView, type CardView, type City } from '../lib/tz';
 
+  // Coordinates as the extension's city search stores them (GeoNames). The
+  // visitor's own zone has none, so its sky follows the zone's tzdata location.
   const POOL: City[] = [
-    { city: 'London', zone: 'Europe/London' },
-    { city: 'New York', zone: 'America/New_York' },
-    { city: 'Tokyo', zone: 'Asia/Tokyo' },
-    { city: 'San Francisco', zone: 'America/Los_Angeles' },
-    { city: 'Sydney', zone: 'Australia/Sydney' },
+    { city: 'London', zone: 'Europe/London', lat: 51.51, lon: -0.13 },
+    { city: 'New York', zone: 'America/New_York', lat: 40.71, lon: -74.01 },
+    { city: 'Tokyo', zone: 'Asia/Tokyo', lat: 35.69, lon: 139.69 },
+    { city: 'San Francisco', zone: 'America/Los_Angeles', lat: 37.77, lon: -122.42 },
+    { city: 'Sydney', zone: 'Australia/Sydney', lat: -33.87, lon: 151.21 },
   ];
   const FIELDS = ['city', 'time', 'relative', 'utc', 'dayLabel', 'week', 'date', 'month'] as const;
 
@@ -386,9 +389,9 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
 
   // Card styles follow the extension's src/styles/Timezone.scss
   .tz {
-    --tz-c0: #3d83e5;
-    --tz-c1: #74b6e6;
-    --tz-c2: #b2d0f0;
+    --tz-c0: var(--sky-day-0);
+    --tz-c1: var(--sky-day-1);
+    --tz-c2: var(--sky-day-2);
     position: relative;
     display: grid;
     grid-template:
@@ -416,19 +419,19 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
     }
 
     &[data-sky='night'] {
-      --tz-c0: #12111e;
-      --tz-c1: #1d1c27;
-      --tz-c2: #2a2933;
+      --tz-c0: var(--sky-night-0);
+      --tz-c1: var(--sky-night-1);
+      --tz-c2: var(--sky-night-2);
     }
     &[data-sky='dawn'] {
-      --tz-c0: #608ebb;
-      --tz-c1: #b994c3;
-      --tz-c2: #e8cba1;
+      --tz-c0: var(--sky-dawn-0);
+      --tz-c1: var(--sky-dawn-1);
+      --tz-c2: var(--sky-dawn-2);
     }
     &[data-sky='twilight'] {
-      --tz-c0: #102d58;
-      --tz-c1: #3e4f85;
-      --tz-c2: #df524e;
+      --tz-c0: var(--sky-twilight-0);
+      --tz-c1: var(--sky-twilight-1);
+      --tz-c2: var(--sky-twilight-2);
     }
 
     &__stars {

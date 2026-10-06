@@ -1,5 +1,5 @@
 ---
-import { STORE_URL } from '../lib/links';
+import { FIREFOX_URL, STORE_URL } from '../lib/links';
 ---
 
 <header class="nav">
@@ -11,11 +11,28 @@ import { STORE_URL } from '../lib/links';
     <nav class="nav__links" aria-label="Main">
       <a href="/#features">Features</a>
       <a href="/privacy">Privacy</a>
+      <!--
+        One button, picked by the browser the visitor is on (<html data-browser>,
+        set in Base.astro before the first paint). Safari, phones and visitors
+        without JavaScript get "Get Skies", which goes to both stores on the home page.
+      -->
       <a
-        class="button button--primary button--small"
+        class="button button--primary button--small nav__install nav__install--chromium"
         href={STORE_URL}
         data-umami-event="add-to-chrome"
         data-umami-event-location="nav">Add to Chrome</a
+      >
+      <a
+        class="button button--primary button--small nav__install nav__install--firefox"
+        href={FIREFOX_URL}
+        data-umami-event="add-to-firefox"
+        data-umami-event-location="nav">Add to Firefox</a
+      >
+      <a
+        class="button button--primary button--small nav__install nav__install--other"
+        href="/#install"
+        data-umami-event="get-skies"
+        data-umami-event-location="nav">Get Skies</a
       >
     </nav>
   </div>
@@ -64,6 +81,16 @@ import { STORE_URL } from '../lib/links';
         }
       }
     }
+  }
+
+  .nav .nav__install {
+    display: none;
+  }
+
+  :global(html[data-browser='chromium']) .nav .nav__install--chromium,
+  :global(html[data-browser='firefox']) .nav .nav__install--firefox,
+  :global(html:not([data-browser='chromium'], [data-browser='firefox'])) .nav .nav__install--other {
+    display: inline-flex;
   }
 
   @media (max-width: 560px) {

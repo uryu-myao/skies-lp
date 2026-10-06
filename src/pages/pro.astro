@@ -30,13 +30,13 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
 
 <Base
   title="Skies Pro — Coming Soon"
-  description="Skies Pro is coming soon to the Skies Chrome extension: custom work hours per city, a weekly Core Time view, and DST alerts. A one-time purchase, no subscription."
+  description="Skies Pro is coming soon to the Skies extension: custom work hours per city, a weekly Core Time view, and DST alerts. A one-time purchase, no subscription."
 >
   <section class="container pro-hero">
-    <p class="eyebrow">World clock for Chrome</p>
+    <p class="eyebrow">World clock browser extension</p>
     <h1>Skies Pro</h1>
     <p class="pro-hero__lede">Coming soon — one-time purchase, no subscription.</p>
-    <p class="pro-hero__note">Pro adds three features to the Skies Chrome extension. It isn't available yet.</p>
+    <p class="pro-hero__note">Pro adds three features to the Skies extension. It isn't available yet.</p>
     <a class="button button--primary pro-hero__action" href="#notify">Notify me when it's ready</a>
   </section>
 
@@ -93,7 +93,8 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
       <article class="item">
         <div class="item__visual" aria-hidden="true">
           <div class="dst">
-            <span class="dst__when">In 9 days (Nov 1), Boston shifts to EST.</span>
+            <!-- No zone abbreviations (EST): Skies never shows them. -->
+            <span class="dst__when">In 9 days (Nov 1), Boston turns its clocks back an hour.</span>
             <span class="dst__gap">Your gap <b>−13h</b> → <b>−14h</b></span>
           </div>
         </div>

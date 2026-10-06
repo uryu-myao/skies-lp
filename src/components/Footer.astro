@@ -1,5 +1,5 @@
 ---
-import { CONTACT_EMAIL, FEEDBACK_URL, STORE_URL } from '../lib/links';
+import { CONTACT_EMAIL, FEEDBACK_URL, FIREFOX_URL, STORE_URL } from '../lib/links';
 
 const year = new Date().getFullYear();
 ---
@@ -11,7 +11,8 @@ const year = new Date().getFullYear();
       <span>© {year} Skies</span>
     </div>
     <nav class="footer__links" aria-label="Footer">
-      <a href={STORE_URL}>Chrome Web Store</a>
+      <a href={STORE_URL} data-umami-event="add-to-chrome" data-umami-event-location="footer">Chrome Web Store</a>
+      <a href={FIREFOX_URL} data-umami-event="add-to-firefox" data-umami-event-location="footer">Firefox Add-ons</a>
       <a href={FEEDBACK_URL}>Send feedback</a>
       <a href="/pro">Skies Pro</a>
       <a href="/privacy">Privacy</a>

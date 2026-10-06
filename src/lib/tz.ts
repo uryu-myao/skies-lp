@@ -1,11 +1,19 @@
 // A trimmed port of the extension's src/core/tz.ts, so the demo popup on the
 // page reads exactly like the real one. Keep the formatting rules in sync.
+// The sky comes from sun.ts, a verbatim copy of the extension's.
 
-export type Sky = 'night' | 'dawn' | 'day' | 'twilight';
+import { ZONE_LINKS } from '../data/zoneLinks';
+import { sunCoordinates, timeOfDay, type TimeOfDay } from './sun';
+
+export type Sky = TimeOfDay;
 
 export interface City {
   city: string;
   zone: string;
+  // Where the sun is worked out for. Without them, the zone's principal
+  // location from tzdata stands in, as for the extension's oldest entries.
+  lat?: number;
+  lon?: number;
 }
 
 export interface CardView extends City {
@@ -20,11 +28,11 @@ export interface CardView extends City {
 }
 
 const MINUS_SIGN = '−';
-// Without live sunrise/sunset data the extension falls back to 06:00 / 18:00,
-// with a 45-minute dawn and twilight window either side.
-const SUNRISE = 360;
-const SUNSET = 1080;
-const TWILIGHT_MINUTES = 45;
+
+// Old and merged zone names → the current one (Asia/Calcutta → Asia/Kolkata).
+export function canonicalZone(timezone: string): string {
+  return ZONE_LINKS[timezone] ?? timezone;
+}
 
 function parts(zone: string, date: Date, options: Intl.DateTimeFormatOptions) {
   return Object.fromEntries(
@@ -84,13 +92,6 @@ function dayDeltaLabel(delta: number): string {
   return `${Math.abs(delta)} days ${delta < 0 ? 'back' : 'ahead'}`;
 }
 
-export function skyAt(minutesOfDay: number): Sky {
-  if (minutesOfDay >= SUNRISE + TWILIGHT_MINUTES && minutesOfDay <= SUNSET - TWILIGHT_MINUTES) return 'day';
-  if (Math.abs(minutesOfDay - SUNRISE) <= TWILIGHT_MINUTES) return 'dawn';
-  if (Math.abs(minutesOfDay - SUNSET) <= TWILIGHT_MINUTES) return 'twilight';
-  return 'night';
-}
-
 export function cardView(city: City, reference: string, date: Date): CardView {
   const p = parts(city.zone, date, {
     hourCycle: 'h23',
@@ -101,6 +102,7 @@ export function cardView(city: City, reference: string, date: Date): CardView {
     month: 'short',
   });
   const relative = offsetMinutes(city.zone, date) - offsetMinutes(reference, date);
+  const sun = sunCoordinates(city.zone, city.lat, city.lon, date);
   return {
     ...city,
     time: `${p.hour}:${p.minute}`,
@@ -110,7 +112,7 @@ export function cardView(city: City, reference: string, date: Date): CardView {
     week: p.weekday.toLowerCase(),
     date: p.day,
     month: p.month.toLowerCase(),
-    sky: skyAt(+p.hour * 60 + +p.minute),
+    sky: timeOfDay(sun.lat, sun.lon, date),
   };
 }
 
