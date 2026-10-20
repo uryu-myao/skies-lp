@@ -2,21 +2,19 @@
 import SkyCard from './SkyCard.astro';
 import { cardView, type City } from '../lib/tz';
 
-// Each visual is a still of the extension's popup at its own sizes, seen by
+const skies = ['Night', 'Dawn', 'Day', 'Twilight'];
+
+// The other visuals are stills of the extension's popup at its own sizes, seen by
 // someone in Tokyo. Cards are worked out for a fixed moment, so their skies,
 // gaps and dates are the ones the extension shows then.
 const TOKYO: City = { city: 'Tokyo', zone: 'Asia/Tokyo', lat: 35.69, lon: 139.69 };
 const BOSTON: City = { city: 'Boston', zone: 'America/New_York', lat: 42.36, lon: -71.06 };
 const KOLKATA: City = { city: 'Kolkata', zone: 'Asia/Kolkata', lat: 22.57, lon: 88.36 };
-const LONDON: City = { city: 'London', zone: 'Europe/London', lat: 51.51, lon: -0.13 };
-const SHANGHAI: City = { city: 'Shanghai', zone: 'Asia/Shanghai', lat: 31.23, lon: 121.47 };
 const PARIS: City = { city: 'Paris', zone: 'Europe/Paris', lat: 48.86, lon: 2.35 };
 const at = (iso: string, ...cities: City[]) => cities.map((c) => cardView(c, TOKYO.zone, new Date(iso)));
 
 // 08:30 on a Wednesday in Tokyo, still Tuesday evening in Boston.
 const gaps = at('2026-10-20T23:30:00Z', TOKYO, BOSTON, KOLKATA);
-// 07:00 in Tokyo: night in London, dawn in Shanghai, twilight in Boston.
-const skies = at('2026-10-20T22:00:00Z', LONDON, SHANGHAI, TOKYO, BOSTON);
 // 23:57 on Oct 23 in Tokyo, nine days before Boston leaves daylight saving
 // on Nov 1. The banner and badge are worded as dstCopy.ts words them.
 const [dstBoston] = at('2026-10-23T14:57:00Z', BOSTON);
@@ -63,10 +61,17 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual" aria-hidden="true">
-          <div class="popup popup--list">
-            {skies.map((view) => <SkyCard view={view} />)}
-          </div>
+        <div class="feature__visual feature__visual--skies" aria-hidden="true">
+          {
+            skies.map((name) => {
+              const sky = name.toLowerCase();
+              return (
+                <span class="sky" style={`--c0:var(--sky-${sky}-0);--c1:var(--sky-${sky}-1);--c2:var(--sky-${sky}-2)`}>
+                  {name}
+                </span>
+              );
+            })
+          }
         </div>
         <h3>A sky for every city</h3>
         <p>
@@ -292,24 +297,36 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 220px;
+      height: 256px;
       // The popup surface itself fades out, so no frame shows; the mask then
       // softens the UI on it, mostly above and below.
       background: radial-gradient(closest-side, var(--color-popup) 62%, transparent);
       overflow: hidden;
-      -webkit-mask-image: radial-gradient(85% 52% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
-      mask-image: radial-gradient(85% 52% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
+      --mask: radial-gradient(85% 52% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
+      -webkit-mask-image: var(--mask);
+      mask-image: var(--mask);
 
       &--top {
         justify-content: flex-start;
       }
 
-      // Taller where the banner wraps to more lines than in the popup (phones
-      // are narrower than its 420px), so Boston's badge stays in view.
+      // The four skies side by side, labels clear of the fade at the bottom.
+      &--skies {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 6px;
+        padding: 28px 20px;
+      }
+
+      // The banner wraps to more lines than in the 420px popup: five in a
+      // three-column card, which still fits, and six on a phone, where the
+      // visual grows so Boston's badge stays in view. A taller clear middle
+      // keeps the banner's first line at full strength.
       &--grow {
+        --mask: radial-gradient(85% 62% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
         height: auto;
-        min-height: 220px;
-        padding: 40px 0;
+        min-height: 256px;
+        padding: 22px 0;
       }
     }
   }
@@ -339,9 +356,24 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     }
 
     &--edit {
-      height: 220px;
+      height: 100%;
       padding-top: 68px;
     }
+  }
+
+  .sky {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, var(--c0), var(--c1) 50%, var(--c2));
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
   }
 
   // DstBanner.scss

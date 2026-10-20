@@ -30,13 +30,13 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
 
 <Base
   title="Skies Pro — Coming Soon"
-  description="Skies Pro is coming soon to the Skies extension: custom work hours per city, a weekly Core Time view, and DST alerts. A one-time purchase, no subscription."
+  description="Skies Pro is coming soon to the Skies extension: custom work hours per city and a weekly Core Time view. A one-time purchase, no subscription."
 >
   <section class="container pro-hero">
     <p class="eyebrow">World clock browser extension</p>
     <h1>Skies Pro</h1>
     <p class="pro-hero__lede">Coming soon — one-time purchase, no subscription.</p>
-    <p class="pro-hero__note">Pro adds three features to the Skies extension. It isn't available yet.</p>
+    <p class="pro-hero__note">Pro adds two features to the Skies extension. It isn't available yet.</p>
     <a class="button button--primary pro-hero__action" href="#notify">Notify me when it's ready</a>
   </section>
 
@@ -90,17 +90,6 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
         <p>See the whole week at once, not just today.</p>
       </article>
 
-      <article class="item">
-        <div class="item__visual" aria-hidden="true">
-          <div class="dst">
-            <!-- No zone abbreviations (EST): Skies never shows them. -->
-            <span class="dst__when">In 9 days (Nov 1), Boston turns its clocks back an hour.</span>
-            <span class="dst__gap">Your gap <b>−13h</b> → <b>−14h</b></span>
-          </div>
-        </div>
-        <h3>DST alerts</h3>
-        <p>Get told before a time change shifts your gap — including when the other side changes and you don't.</p>
-      </article>
     </div>
   </section>
 
@@ -187,9 +176,10 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
     }
   }
 
+  // Two items fill the row between them.
   .included__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 20px;
   }
 
@@ -299,26 +289,6 @@ const lanePct = (hours: number) => `${(hours / 16) * 100}%`;
       font-size: 11px;
       font-weight: 600;
       color: var(--color-text-muted);
-    }
-  }
-
-  .dst {
-    display: grid;
-    gap: 8px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.06);
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 500;
-
-    &__gap {
-      color: var(--color-text-muted);
-
-      b {
-        color: var(--color-logo-bottom);
-        font-weight: 600;
-      }
     }
   }
 
