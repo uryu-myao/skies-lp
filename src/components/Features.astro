@@ -19,7 +19,7 @@ const gaps = at('2026-10-20T23:30:00Z', TOKYO, BOSTON, KOLKATA);
 // on Nov 1. The banner and badge are worded as dstCopy.ts words them.
 const [dstBoston] = at('2026-10-23T14:57:00Z', BOSTON);
 // 23:57 in Tokyo, with the converter dragged to 15:00 that day.
-const converted = at('2026-10-20T06:00:00Z', BOSTON, TOKYO);
+const [converted] = at('2026-10-20T06:00:00Z', BOSTON);
 const convertStops = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 // Edit mode, also at 23:57 in Tokyo.
 const editing = at('2026-10-20T14:57:00Z', TOKYO, PARIS, BOSTON);
@@ -81,7 +81,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual feature__visual--grow" aria-hidden="true">
+        <div class="feature__visual feature__visual--dst" aria-hidden="true">
           <div class="popup popup--list">
             <div class="dst-banner">
               <span class="dst-banner__icon">
@@ -161,8 +161,8 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual feature__visual--top" aria-hidden="true">
-          <div class="popup">
+        <div class="feature__visual feature__visual--converter" aria-hidden="true">
+          <div class="popup popup--panel">
             <div class="header">
               <span class="header__chip">
                 <img src="/favicon.svg" alt="" width="22" height="22" />
@@ -198,7 +198,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
               </span>
             </div>
             <div class="popup--list popup--converted">
-              {converted.map((view) => <SkyCard view={view} converting />)}
+              <SkyCard view={converted} converting />
             </div>
           </div>
         </div>
@@ -210,8 +210,8 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual feature__visual--top" aria-hidden="true">
-          <div class="popup popup--edit">
+        <div class="feature__visual" aria-hidden="true">
+          <div class="popup popup--panel popup--edit">
             <div class="edit-bar">
               <span class="edit-bar__title">Edit list</span>
               <span class="edit-bar__done">Done</span>
@@ -288,45 +288,50 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       color: var(--color-text-muted);
     }
 
-    // A crop of the popup that fades out to nothing at its edges, into the card
-    // around it. Full strength in the middle, where the part each feature is
-    // about sits.
-    // A crop wider than a narrow card overflows both sides evenly.
+    // The feature's piece of the popup, with a faint glow behind it in one of
+    // the popup's own colors. Nothing clips it, so the glow stays round.
     &__visual {
+      --glow: rgba(64, 121, 200, 0.34);
+      position: relative;
+      isolation: isolate;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 256px;
-      // The popup surface itself fades out, so no frame shows; the mask then
-      // softens the UI on it, mostly above and below.
-      background: radial-gradient(closest-side, var(--color-popup) 62%, transparent);
-      overflow: hidden;
-      --mask: radial-gradient(85% 52% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
-      -webkit-mask-image: var(--mask);
-      mask-image: var(--mask);
 
-      &--top {
-        justify-content: flex-start;
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 2% -2%;
+        z-index: -1;
+        background: radial-gradient(closest-side, var(--glow) 40%, transparent);
+        filter: blur(26px);
+        pointer-events: none;
       }
 
-      // The four skies side by side, labels clear of the fade at the bottom.
+      // The four skies side by side, in dawn's mauve.
       &--skies {
+        --glow: rgba(185, 148, 195, 0.28);
         flex-direction: row;
         align-items: stretch;
         gap: 6px;
-        padding: 28px 20px;
+        padding: 24px 20px;
       }
 
-      // The banner wraps to more lines than in the 420px popup: five in a
-      // three-column card, which still fits, and six on a phone, where the
-      // visual grows so Boston's badge stays in view. A taller clear middle
-      // keeps the banner's first line at full strength.
-      &--grow {
-        --mask: radial-gradient(85% 62% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
+      // The banner's own blue tint. It wraps to more lines than in the 420px
+      // popup: five in a three-column card, which still fits, and six on a
+      // phone, where the visual grows to hold it.
+      &--dst {
+        --glow: rgba(0, 170, 255, 0.24);
         height: auto;
         min-height: 256px;
         padding: 22px 0;
+      }
+
+      // The converter track's violet.
+      &--converter {
+        --glow: rgba(109, 104, 145, 0.45);
       }
     }
   }
@@ -350,14 +355,31 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       }
     }
 
-    // The header's 80px padding while the converter is open, then the list's 8px.
-    &--converted {
-      padding-top: 8px;
+    // A piece that includes the popup's chrome (header, edit bar) is shown as
+    // a small popup of its own.
+    // Its header is 4px narrower a side than the popup's, so the whole 300px
+    // header row fits a phone-width card.
+    &--panel {
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      background: var(--color-popup);
+      overflow: hidden;
+      box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.6);
+
+      .header {
+        padding: 0 14px;
+      }
     }
 
+    // The header's 80px padding while the converter is open, then the list's 8px.
+    &--converted {
+      padding: 8px 18px 14px;
+    }
+
+    // Room below the list, so the toast covers only the last row's lower half.
     &--edit {
-      height: 100%;
-      padding-top: 68px;
+      padding: 68px 0 34px;
     }
   }
 
