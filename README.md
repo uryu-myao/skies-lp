@@ -38,7 +38,8 @@ src/
 ├── components/
 │   ├── PopupDemo.astro  live popup demo: the visitor's zone as Base, plus a converter
 │   ├── InstallButtons.astro  Chrome and Firefox buttons, the visitor's store first
-│   ├── Features.astro
+│   ├── Features.astro  feature cards; each visual is a still of the extension's popup
+│   ├── SkyCard.astro   one static city card, styled like the extension's, for those visuals
 │   ├── Nav.astro
 │   └── Footer.astro
 ├── lib/

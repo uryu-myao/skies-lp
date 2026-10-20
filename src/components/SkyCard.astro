@@ -1,0 +1,276 @@
+---
+import { makeStars, type CardView } from '../lib/tz';
+
+// A still of one city card, marked up and styled like the extension's
+// (src/components/Timezone.tsx, src/styles/Timezone.scss), for the feature
+// visuals. `badge` is the DST badge ("Nov 1 → −14h"), `compact` edit mode's
+// single row (EditList.scss), and `converting` hides the stars, as the
+// converter does.
+interface Props {
+  view: CardView;
+  badge?: string;
+  compact?: boolean;
+  converting?: boolean;
+}
+
+const { view, badge, compact = false, converting = false } = Astro.props;
+const stars = view.sky === 'night' && !converting ? makeStars(view.city) : [];
+---
+
+<div class:list={['timezone', `timezone--${view.sky}`, { 'timezone--compact': compact }]}>
+  <div class="timezone-inner">
+    {
+      stars.length > 0 && (
+        <svg class="timezone-stars">
+          {stars.map((s) => (
+            <circle cx={s.cx} cy={s.cy} r={s.r} fill="white" fill-opacity={s.o} />
+          ))}
+        </svg>
+      )
+    }
+    <div class="timezone-data__location">{view.city}</div>
+    <div class="timezone-data__time">{view.time}</div>
+    {
+      !compact && (
+        <div class="timezone-footer">
+          <p><span class="timezone-data__relative">{view.relative}</span><span class="timezone-data__offset">{view.utc}</span>{badge && <span class="timezone-data__dst">{badge}</span>}</p>
+          <p>{view.dayLabel && <span class="timezone-data__day-relative">{view.dayLabel}</span>}<span><span class="timezone-data__week">{view.week}</span><span><span class="timezone-data__date">{view.date}</span><span class="timezone-data__month">{view.month}</span></span></span></p>
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style lang="scss">
+  // The sky goes on .timezone-inner itself, as in the extension: the page
+  // registers --tz-c0…2 as non-inheriting (PopupDemo.astro).
+  .timezone {
+    position: relative;
+    width: 100%;
+    margin: 0 0 6px;
+    border-radius: 22px;
+    color: #fff;
+
+    &--night &-inner {
+      --tz-c0: var(--sky-night-0);
+      --tz-c1: var(--sky-night-1);
+      --tz-c2: var(--sky-night-2);
+    }
+    &--dawn &-inner {
+      --tz-c0: var(--sky-dawn-0);
+      --tz-c1: var(--sky-dawn-1);
+      --tz-c2: var(--sky-dawn-2);
+    }
+    &--twilight &-inner {
+      --tz-c0: var(--sky-twilight-0);
+      --tz-c1: var(--sky-twilight-1);
+      --tz-c2: var(--sky-twilight-2);
+    }
+
+    &-inner {
+      --tz-c0: var(--sky-day-0);
+      --tz-c1: var(--sky-day-1);
+      --tz-c2: var(--sky-day-2);
+      position: relative;
+      display: grid;
+      grid-template:
+        'local time' auto
+        'footer footer' 20px / 1fr 1fr;
+      gap: 3px 4px;
+      padding-top: 6px;
+      background: linear-gradient(180deg, var(--tz-c0) 0%, var(--tz-c1) 50%, var(--tz-c2) 100%);
+      border-radius: 22px;
+      corner-shape: squircle;
+      overflow: hidden;
+      box-shadow:
+        rgba(255, 255, 255, 0.1) 0 1px 0 0 inset,
+        rgba(7, 13, 79, 0.05) 0 0 20px 3px,
+        rgba(7, 13, 79, 0.05) 0 0 40px 20px,
+        rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
+
+      // As in the extension: without squircle corners a plain arc as large
+      // as the squircle looks far rounder.
+      @supports not (corner-shape: squircle) {
+        border-radius: 12px;
+      }
+    }
+
+    &-stars {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      pointer-events: none;
+
+      circle {
+        animation: star-twinkle 4s ease-in-out infinite;
+
+        &:nth-child(4n) {
+          animation-duration: 3.2s;
+          animation-delay: -0.8s;
+        }
+        &:nth-child(4n + 1) {
+          animation-duration: 5.1s;
+          animation-delay: -2.3s;
+        }
+        &:nth-child(4n + 2) {
+          animation-duration: 4.4s;
+          animation-delay: -1.5s;
+        }
+        &:nth-child(4n + 3) {
+          animation-duration: 3.8s;
+          animation-delay: -3.1s;
+        }
+      }
+    }
+
+    &-footer {
+      grid-area: footer;
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 27px 6px 13px;
+      color: rgba(255, 255, 255, 0.85);
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+      white-space: nowrap;
+    }
+  }
+
+  .timezone-data {
+    &__location {
+      grid-area: local;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 4px 0 0 12px;
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    &__time {
+      grid-area: time;
+      position: relative;
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 26px;
+      font-family: var(--font-body);
+      font-size: 30px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    &__relative {
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    &__offset {
+      position: relative;
+      padding-left: 6px;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+
+    // The DST badge: the date and the gap it becomes.
+    &__dst {
+      margin-left: 8px;
+      padding: 1px 5px;
+      border-radius: 100vw;
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      text-transform: none;
+    }
+
+    &__week {
+      position: relative;
+      padding-right: 4px;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: -2px;
+        width: 1px;
+        height: 64%;
+        background: #fff;
+        opacity: 0.3;
+        transform: translateY(-50%);
+      }
+    }
+
+    &__date {
+      padding-left: 7px;
+    }
+
+    &__month {
+      padding-left: 2px;
+    }
+
+    &__day-relative {
+      position: relative;
+      display: inline-block;
+      padding-right: 12px;
+      color: #fff;
+      text-transform: none;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 5px;
+        width: 1px;
+        height: 64%;
+        background: #fff;
+        opacity: 0.3;
+        transform: translateY(-50%);
+      }
+    }
+  }
+
+  // Edit mode's single row: city and time only, the sky kept.
+  .timezone--compact {
+    margin: 0;
+
+    .timezone-inner {
+      grid-template: 'local time' 44px / 1fr auto;
+      align-items: center;
+      padding-top: 0;
+      border-radius: 16px;
+
+      @supports not (corner-shape: squircle) {
+        border-radius: 12px;
+      }
+    }
+
+    .timezone-data__location {
+      padding: 0 0 0 14px;
+      font-size: 16px;
+    }
+
+    .timezone-data__time {
+      padding-right: 14px;
+      font-size: 20px;
+    }
+  }
+
+  @keyframes star-twinkle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.15;
+    }
+  }
+</style>

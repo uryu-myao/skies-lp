@@ -1,12 +1,39 @@
 ---
-const skies = ['Night', 'Dawn', 'Day', 'Twilight'];
+import SkyCard from './SkyCard.astro';
+import { cardView, type City } from '../lib/tz';
 
-// Working hours on a Tokyo clock: Tokyo 9–18, Singapore 9–18 (10–19 here),
-// Berlin in winter 9–18 (16–01 here). Everyone overlaps 16:00–18:00.
+// Each visual is a still of the extension's popup at its own sizes, seen by
+// someone in Tokyo. Cards are worked out for a fixed moment, so their skies,
+// gaps and dates are the ones the extension shows then.
+const TOKYO: City = { city: 'Tokyo', zone: 'Asia/Tokyo', lat: 35.69, lon: 139.69 };
+const BOSTON: City = { city: 'Boston', zone: 'America/New_York', lat: 42.36, lon: -71.06 };
+const KOLKATA: City = { city: 'Kolkata', zone: 'Asia/Kolkata', lat: 22.57, lon: 88.36 };
+const LONDON: City = { city: 'London', zone: 'Europe/London', lat: 51.51, lon: -0.13 };
+const SHANGHAI: City = { city: 'Shanghai', zone: 'Asia/Shanghai', lat: 31.23, lon: 121.47 };
+const PARIS: City = { city: 'Paris', zone: 'Europe/Paris', lat: 48.86, lon: 2.35 };
+const at = (iso: string, ...cities: City[]) => cities.map((c) => cardView(c, TOKYO.zone, new Date(iso)));
+
+// 08:30 on a Wednesday in Tokyo, still Tuesday evening in Boston.
+const gaps = at('2026-10-20T23:30:00Z', TOKYO, BOSTON, KOLKATA);
+// 07:00 in Tokyo: night in London, dawn in Shanghai, twilight in Boston.
+const skies = at('2026-10-20T22:00:00Z', LONDON, SHANGHAI, TOKYO, BOSTON);
+// 23:57 on Oct 23 in Tokyo, nine days before Boston leaves daylight saving
+// on Nov 1. The banner and badge are worded as dstCopy.ts words them.
+const [dstBoston] = at('2026-10-23T14:57:00Z', BOSTON);
+// 23:57 in Tokyo, with the converter dragged to 15:00 that day.
+const converted = at('2026-10-20T06:00:00Z', BOSTON, TOKYO);
+const convertStops = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+// Edit mode, also at 23:57 in Tokyo.
+const editing = at('2026-10-20T14:57:00Z', TOKYO, PARIS, BOSTON);
+
+// Core Time, 9–18 everywhere, on a Tokyo axis: Singapore is 10–19 there and
+// Berlin (summer time) 16–01, so its row wraps past midnight. Everyone
+// overlaps 16:00–18:00.
+const coreDots = [3, 6, 9, 12, 15, 18, 21];
 const coreRows = [
-  { city: 'Tokyo', from: 9, to: 18 },
-  { city: 'Singapore', from: 10, to: 19 },
-  { city: 'Berlin', from: 16, to: 24 },
+  { city: 'Tokyo', you: true, hours: [[9, 18]] },
+  { city: 'Singapore', you: false, hours: [[10, 19]] },
+  { city: 'Berlin', you: false, hours: [[0, 1], [16, 24]] },
 ];
 const overlap = { from: 16, to: 18 };
 const pct = (h: number) => `${(h / 24) * 100}%`;
@@ -20,17 +47,12 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       <p>Everything opens from one click on the toolbar, and nothing gets in the way of reading the time.</p>
     </header>
 
-    <!-- Skies and Core Time lead: on a three-column screen they share the first row with Gaps. -->
+    <!-- Skies and the DST alert lead: on a three-column screen they share the first row with Gaps. -->
     <div class="features__grid">
       <article class="feature">
-        <div class="feature__visual">
-          <div class="chip chip--night">
-            <span><b>−13h</b> <i>UTC−04</i></span>
-            <span><b>yesterday</b> | wed 23 sep</span>
-          </div>
-          <div class="chip chip--day">
-            <span><b>+3:30h</b> <i>UTC+05:30</i></span>
-            <span>thu 24 sep</span>
+        <div class="feature__visual" aria-hidden="true">
+          <div class="popup popup--list">
+            {gaps.map((view) => <SkyCard view={view} />)}
           </div>
         </div>
         <h3>Gaps, not offsets</h3>
@@ -41,17 +63,10 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual feature__visual--skies">
-          {
-            skies.map((name) => {
-              const sky = name.toLowerCase();
-              return (
-                <span class="sky" style={`--c0:var(--sky-${sky}-0);--c1:var(--sky-${sky}-1);--c2:var(--sky-${sky}-2)`}>
-                  {name}
-                </span>
-              );
-            })
-          }
+        <div class="feature__visual" aria-hidden="true">
+          <div class="popup popup--list">
+            {skies.map((view) => <SkyCard view={view} />)}
+          </div>
         </div>
         <h3>A sky for every city</h3>
         <p>
@@ -61,22 +76,76 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual">
-          <div class="core" aria-hidden="true">
-            {
-              coreRows.map((r, i) => (
-                <>
-                  <span class="core__city" style={`grid-row:${i + 1}`}>{r.city}</span>
-                  <span class="core__lane" style={`grid-row:${i + 1}`}>
-                    <span class="core__hours" style={`left:${pct(r.from)};width:${pct(r.to - r.from)}`} />
-                  </span>
-                </>
-              ))
-            }
-            <span class="core__overlay">
-              <span class="core__overlap" style={`left:${pct(overlap.from)};width:${pct(overlap.to - overlap.from)}`}
-              ></span>
-            </span>
+        <div class="feature__visual feature__visual--grow" aria-hidden="true">
+          <div class="popup popup--list">
+            <div class="dst-banner">
+              <span class="dst-banner__icon">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="5.6" stroke="currentColor" stroke-width="1.3"></circle>
+                  <path d="M7 4v3.2l2 1.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <div class="dst-banner__text">
+                <p class="dst-banner__headline">In <span class="dst-banner__time">9 days</span> (<span class="dst-banner__time">Nov 1</span>), <span class="dst-banner__city">Boston</span> shifts to <span class="dst-banner__time">UTC−05</span> — your clock doesn’t.</p>
+                <p class="dst-banner__detail">Your gap: <span class="dst-banner__time">13 hours</span> → <span class="dst-banner__time">14 hours</span></p>
+              </div>
+              <span class="dst-banner__close">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>
+              </span>
+            </div>
+            <SkyCard view={dstBoston} badge="Nov 1 → −14h" />
+          </div>
+        </div>
+        <h3>The clocks change, your gap moves</h3>
+        <p>
+          Two weeks before a time change, Skies tells you what it does to you: “In 9 days, Boston shifts to UTC−05.
+          Your gap: 13 hours → 14 hours.” Including the case where you don't change your clocks at all and your
+          colleague does.
+        </p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__visual" aria-hidden="true">
+          <div class="popup">
+            <div class="core-time">
+              <div class="core-time__header">
+                <span class="core-time__title">Core time</span>
+                <span class="core-time__meta">
+                  today · 3 cities
+                  <svg class="core-time__chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+              </div>
+              <div class="core-time__band">
+                {
+                  coreRows.map((row) => (
+                    <>
+                      <span class:list={['core-time__label', { 'core-time__label--you': row.you }]}>
+                        {row.city}
+                        {row.you && <span class="core-time__you">You</span>}
+                      </span>
+                      <span class="core-time__track">
+                        {coreDots.map((h) => (
+                          <span class:list={['core-time__dot', { hour: h % 6 === 0 }]} style={`left:${pct(h)}`} />
+                        ))}
+                        {row.hours.map(([from, to]) => (
+                          <span class="core-time__segment" style={`left:${pct(from)};width:${pct(to - from)}`} />
+                        ))}
+                        <span class="core-time__overlap" style={`left:${pct(overlap.from)};width:${pct(overlap.to - overlap.from)}`} />
+                      </span>
+                    </>
+                  ))
+                }
+                <span></span>
+                <span class="core-time__scale">{[0, 6, 12, 18, 24].map((h) => <span>{h}</span>)}</span>
+              </div>
+              <div class="core-time__conclusion">
+                <span class="core-time__headline">Overlap <span class="core-time__range">16:00–18:00</span></span>
+              </div>
+            </div>
           </div>
         </div>
         <h3>Core Time</h3>
@@ -87,12 +156,46 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual">
-          <div class="mini-slider" aria-hidden="true">
-            <span class="mini-slider__rail"></span>
-            <span class="mini-slider__thumb"></span>
+        <div class="feature__visual feature__visual--top" aria-hidden="true">
+          <div class="popup">
+            <div class="header">
+              <span class="header__chip">
+                <img src="/favicon.svg" alt="" width="22" height="22" />
+                <span class="header__pill">
+                  <span class="header__city">Tokyo</span>
+                  <span class="header__time">23:57</span>
+                  <svg class="header__chevron" width="8" height="8" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+              </span>
+              <span class="header__btns">
+                <span class="header__group">
+                  <span class="header__btn header__btn--plus"></span>
+                  <span class="header__btn header__btn--convert"></span>
+                </span>
+                <span class="header__group">
+                  <span class="header__btn header__btn--settings"></span>
+                </span>
+              </span>
+            </div>
+            <div class="converter">
+              <span class="converter__reset">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.2 4.6A4 4 0 1 1 2 6.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+                  <path d="M1.8 1.8v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <span class="converter__scale">{[0, 6, 12, 18, 24].map((h) => <span>{h}</span>)}</span>
+              <span class="converter__track">
+                {convertStops.map((_, i) => <span class:list={['converter__dot', { hour: i % 2 === 0 }]} />)}
+                <span class="converter__thumb"><span></span><span></span><span></span></span>
+              </span>
+            </div>
+            <div class="popup--list popup--converted">
+              {converted.map((view) => <SkyCard view={view} converting />)}
+            </div>
           </div>
-          <div class="mini-slider__scale" aria-hidden="true"><span>00</span><span>12</span><span>24</span></div>
         </div>
         <h3>Time converter</h3>
         <p>
@@ -102,34 +205,34 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       </article>
 
       <article class="feature">
-        <div class="feature__visual feature__visual--list">
-          {
-            ['Tokyo', 'London'].map((city) => (
-              <span class="row">
-                <span class="row__grip" aria-hidden="true" />
-                {city}
-              </span>
-            ))
-          }
-          <span class="toast">Removed Sydney · <b>Undo</b></span>
+        <div class="feature__visual feature__visual--top" aria-hidden="true">
+          <div class="popup popup--edit">
+            <div class="edit-bar">
+              <span class="edit-bar__title">Edit list</span>
+              <span class="edit-bar__done">Done</span>
+            </div>
+            <div class="popup--list">
+              {
+                editing.map((view) => (
+                  <div class="edit-row">
+                    <span class="edit-row__remove" />
+                    <SkyCard view={view} compact />
+                    <span class="edit-row__handle">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 4h10M2 7h10M2 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                  </div>
+                ))
+              }
+            </div>
+            <span class="undo-toast">Removed Berlin <span class="undo-toast__sep">·</span> <span class="undo-toast__undo">Undo</span></span>
+          </div>
         </div>
         <h3>Your list, your way</h3>
         <p>
           Add up to 30 cities — search in English, Chinese or Japanese, or by an older name like Bangalore. Give them
           your own names and reorder them by drag or keyboard. Removed one by mistake? Undo.
-        </p>
-      </article>
-
-      <article class="feature">
-        <div class="feature__visual feature__visual--dst">
-          <span><em>January</em> Berlin <b>−8h</b></span>
-          <span><em>July</em> Berlin <b>−7h</b></span>
-          <small>From Tokyo</small>
-        </div>
-        <h3>Daylight saving, handled</h3>
-        <p>
-          Gaps are worked out for the moment you're looking at, never cached. When a city changes its clocks, Skies
-          shows it the same day.
         </p>
       </article>
     </div>
@@ -180,240 +283,589 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       color: var(--color-text-muted);
     }
 
+    // A crop of the popup that fades out to nothing at its edges, into the card
+    // around it. Full strength in the middle, where the part each feature is
+    // about sits.
+    // A crop wider than a narrow card overflows both sides evenly.
     &__visual {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 8px;
-      height: 148px;
-      padding: 16px;
-      border-radius: 16px;
-      background: var(--color-surface-raised);
+      align-items: center;
+      height: 220px;
+      // The popup surface itself fades out, so no frame shows; the mask then
+      // softens the UI on it, mostly above and below.
+      background: radial-gradient(closest-side, var(--color-popup) 62%, transparent);
       overflow: hidden;
+      -webkit-mask-image: radial-gradient(85% 52% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
+      mask-image: radial-gradient(85% 52% at 50% 50%, #000 55%, rgba(0, 0, 0, 0.5) 82%, transparent 100%);
 
-      &--skies {
-        flex-direction: row;
-        align-items: stretch;
-        gap: 6px;
-      }
-
-      &--dst {
-        align-items: flex-start;
-        font-family: var(--font-display);
-        font-size: 15px;
-        font-weight: 600;
-
-        span {
-          display: flex;
-          gap: 10px;
-          align-items: baseline;
-        }
-
-        em {
-          width: 64px;
-          font-style: normal;
-          font-size: 12px;
-          color: var(--color-text-faint);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        b {
-          color: var(--color-logo-bottom);
-        }
-
-        small {
-          margin-top: 4px;
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--color-text-faint);
-        }
-      }
-
-      &--list {
-        gap: 6px;
+      &--top {
         justify-content: flex-start;
       }
+
+      // Taller where the banner wraps to more lines than in the popup (phones
+      // are narrower than its 420px), so Boston's badge stays in view.
+      &--grow {
+        height: auto;
+        min-height: 220px;
+        padding: 40px 0;
+      }
     }
   }
 
-  .chip {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.85);
-
-    b {
-      color: #fff;
-      font-size: 12px;
-      text-transform: none;
-    }
-
-    i {
-      font-style: normal;
-      opacity: 0.75;
-    }
-
-    &--night {
-      background: linear-gradient(180deg, var(--sky-night-0), var(--sky-night-2));
-      box-shadow: rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
-    }
-
-    &--day {
-      background: linear-gradient(180deg, var(--sky-day-0), var(--sky-day-2));
-    }
-  }
-
-  .sky {
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 10px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, var(--c0), var(--c1) 50%, var(--c2));
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 600;
-    color: #fff;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
-  }
-
-  .mini-slider {
+  // The popup's own type and spacing (the extension's normalize.css sets a
+  // 1.15 line height).
+  .popup {
+    flex: none;
     position: relative;
-    height: 22px;
+    width: 100%;
+    min-width: 300px;
+    color: #fff;
+    font-family: var(--font-display);
+    line-height: 1.15;
 
-    &__rail {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 6px;
-      border-radius: 100vw;
-      background:
-        radial-gradient(circle, rgba(255, 255, 255, 0.55) 2px, transparent 2.5px) 5px 50% / calc((100% - 10px) / 8) 100%
-          repeat-x,
-        linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
-      transform: translateY(-50%);
+    &--list {
+      padding: 0 18px;
+
+      > :global(:last-child) {
+        margin-bottom: 0;
+      }
     }
 
-    &__thumb {
+    // The header's 80px padding while the converter is open, then the list's 8px.
+    &--converted {
+      padding-top: 8px;
+    }
+
+    &--edit {
+      height: 220px;
+      padding-top: 68px;
+    }
+  }
+
+  // DstBanner.scss
+  .dst-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 10px 8px 10px 12px;
+    border: 1px solid rgba(0, 170, 255, 0.1);
+    border-radius: 12px;
+    background: rgba(0, 170, 255, 0.12);
+
+    &__icon {
+      flex: none;
+      display: flex;
+      margin-top: 1px;
+      opacity: 0.7;
+    }
+
+    &__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &__headline {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.85);
+      text-wrap: wrap;
+    }
+
+    &__detail {
+      margin: 2px 0 0;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    &__city {
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    &__time {
+      font-weight: 600;
+      color: #8fd3ff;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    &__close {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      opacity: 0.6;
+    }
+  }
+
+  // CoreTimePanel.scss, expanded
+  .core-time {
+    margin: 0 18px;
+    border-radius: 12px;
+    background: #202025;
+    overflow: hidden;
+    box-shadow:
+      rgba(255, 255, 255, 0.1) 0 1px 0 0 inset,
+      rgba(7, 13, 79, 0.05) 0 0 20px 3px,
+      rgba(7, 13, 79, 0.05) 0 0 40px 20px,
+      rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 14px;
+    }
+
+    &__title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    &__meta {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      opacity: 0.5;
+    }
+
+    &__chevron {
+      transform: rotate(180deg);
+    }
+
+    &__band {
+      display: grid;
+      grid-template-columns: minmax(46px, max-content) 1fr;
+      align-items: center;
+      column-gap: 10px;
+      row-gap: 4px;
+      padding: 6px 14px 12px;
+    }
+
+    &__label {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.85;
+
+      &--you {
+        color: #9db8ea;
+        opacity: 1;
+      }
+    }
+
+    &__you {
+      padding: 2px 4px;
+      background: rgba(0, 170, 255, 0.12);
+      font-size: 9px;
+      font-style: italic;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.85;
+    }
+
+    &__track {
+      position: relative;
+      height: 10px;
+      border-radius: 100vw;
+      background: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 100vw;
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    &__dot {
       position: absolute;
       top: 50%;
-      left: 66%;
-      width: 20px;
-      height: 20px;
+      width: 2px;
+      height: 2px;
       border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.6);
       transform: translate(-50%, -50%);
-      animation: slide 6s ease-in-out infinite;
+
+      &.hour {
+        width: 3px;
+        height: 3px;
+        background: rgba(255, 247, 213, 0.72);
+      }
+    }
+
+    &__segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: #5c7cd6;
+    }
+
+    &__overlap {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      outline: 1.5px solid var(--color-core);
     }
 
     &__scale {
       display: flex;
       justify-content: space-between;
-      font-family: var(--font-display);
-      font-size: 11px;
-      color: var(--color-text-faint);
-    }
-  }
+      margin-top: 2px;
+      font-family: var(--font-body);
+      font-size: 10px;
+      opacity: 0.45;
 
-  @keyframes slide {
-    0%,
-    100% {
-      left: 30%;
-    }
-    50% {
-      left: 72%;
-    }
-  }
+      span:nth-child(2) {
+        padding-left: 9px;
+      }
 
-  .core {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: repeat(3, auto);
-    align-items: center;
-    gap: 12px;
+      span:nth-child(3),
+      span:nth-child(4) {
+        padding-left: 8px;
+      }
+    }
 
-    &__city {
-      grid-column: 1;
-      font-family: var(--font-display);
+    &__conclusion {
+      padding: 10px 16px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.075);
+    }
+
+    &__headline {
       font-size: 12px;
       font-weight: 600;
-      color: var(--color-text-muted);
     }
 
-    &__lane {
-      grid-column: 2;
-      position: relative;
-      height: 12px;
-      border-radius: 100vw;
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    &__hours {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      border-radius: 100vw;
-      background: var(--color-blue);
-    }
-
-    // Spans every lane, so the overlap box lines up with the hour scale
-    &__overlay {
-      position: relative;
-      grid-column: 2;
-      grid-row: 1 / -1;
-      align-self: stretch;
-      pointer-events: none;
-    }
-
-    &__overlap {
-      position: absolute;
-      top: -6px;
-      bottom: -6px;
-      border: 2px solid var(--color-core);
-      border-radius: 8px;
+    &__range {
+      padding-left: 4px;
+      color: #9cb2e7;
     }
   }
 
-  .row {
+  // Header.scss, with the converter open
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    padding: 0 18px;
+
+    &__chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      img {
+        border-radius: 50%;
+      }
+    }
+
+    &__pill {
+      display: flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 12px 0 14px;
+      border-radius: 100vw;
+      background: rgba(0, 170, 255, 0.12);
+    }
+
+    &__city {
+      padding-right: 5px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    &__time {
+      min-width: 38px;
+      padding-right: 3px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-align: right;
+      opacity: 0.85;
+    }
+
+    &__chevron {
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    &__btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    &__group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px;
+      border-radius: 100vw;
+      background: rgba(0, 170, 255, 0.12);
+    }
+
+    // Each icon's drop shadow sits below and to the right of its glyph;
+    // --glyph-shift centres the glyph itself.
+    &__btn {
+      display: block;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-position: calc(50% + var(--glyph-shift)) calc(50% + var(--glyph-shift));
+      background-repeat: no-repeat;
+
+      &--plus {
+        --glyph-shift: 0.5px;
+        background-size: 15px;
+        background-image: url('/icons/icon-plus-dark.svg');
+      }
+
+      &--convert {
+        --glyph-shift: 0.5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        background-size: 22px;
+        background-image: url('/icons/icon-convert-dark.svg');
+      }
+
+      &--settings {
+        --glyph-shift: 0.8px;
+        background-size: 20px;
+        background-image: url('/icons/icon-setting-header.svg');
+      }
+    }
+  }
+
+  .converter {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 40px 18px;
+    border-top: 2px solid var(--color-blue);
+    background: #202025;
+
+    &__reset {
+      position: absolute;
+      top: 31px;
+      left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      opacity: 0.7;
+    }
+
+    &__scale {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px 0 8px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1;
+      opacity: 0.5;
+
+      span:nth-child(2),
+      span:nth-child(3) {
+        padding-left: 4px;
+      }
+    }
+
+    &__track {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 12px;
+      padding: 0 10px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    &__dot {
+      position: relative;
+      z-index: 1;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+
+      &.hour {
+        width: 4px;
+        height: 4px;
+        background: rgba(255, 247, 213, 0.72);
+      }
+    }
+
+    // On the 15:00 stop, the sixth of nine: dot centres run from 12px in at
+    // each end.
+    &__thumb {
+      position: absolute;
+      top: 50%;
+      left: calc(12px + (100% - 24px) * 0.625 - 18px);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      width: 36px;
+      height: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 7px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(9px) saturate(160%);
+      -webkit-backdrop-filter: blur(9px) saturate(160%);
+      box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        inset 0 -6px 8px -6px rgba(0, 0, 0, 0.15);
+      transform: translateY(-50%);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: -60%;
+        left: -15%;
+        right: -15%;
+        height: 90%;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        filter: blur(6px);
+      }
+
+      span {
+        position: relative;
+        z-index: 1;
+        width: 2px;
+        height: 10px;
+        border-radius: 100vw;
+        background: rgba(255, 255, 255, 0.4);
+      }
+    }
+  }
+
+  // EditList.scss
+  .edit-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 6px 12px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.06);
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 600;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 18px 0 24px;
 
-    &__grip {
-      width: 10px;
-      height: 14px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1.2px, transparent 1.6px) 0 0 / 5px 4.67px;
+    &__title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    &__done {
+      padding: 6px 16px;
+      border-radius: 100vw;
+      background: var(--color-blue);
+      font-size: 12px;
+      font-weight: 700;
     }
   }
 
-  .toast {
-    align-self: center;
-    margin-top: 4px;
-    padding: 5px 14px;
+  .edit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+
+    &__remove {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e5484d;
+
+      &::before {
+        content: '';
+        width: 10px;
+        height: 2px;
+        border-radius: 1px;
+        background: #fff;
+      }
+    }
+
+    &__handle {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 36px;
+      opacity: 0.55;
+    }
+  }
+
+  // UndoToast.scss
+  .undo-toast {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 8px 9px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 100vw;
-    background: #fff;
-    color: #202025;
-    font-family: var(--font-display);
+    background: rgba(32, 32, 37, 0.92);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
     font-size: 12px;
     font-weight: 500;
+    white-space: nowrap;
+    transform: translateX(-50%);
 
-    b {
-      color: var(--color-blue);
+    &__sep {
+      opacity: 0.4;
+    }
+
+    &__undo {
+      padding: 3px 10px;
+      border-radius: 100vw;
+      background: rgba(0, 170, 255, 0.12);
+      font-weight: 700;
     }
   }
 </style>
