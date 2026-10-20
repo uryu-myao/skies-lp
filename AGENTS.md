@@ -3,7 +3,7 @@
 Landing page for the Skies browser extension for Chrome and Firefox (useskies.com): a static Astro site with Sass, deployed as a Cloudflare Worker with static assets. See README.md for commands, deployment and structure.
 
 - Pushing to `main` deploys to production through Cloudflare Workers Builds (`npx wrangler deploy`). `build.command` in `wrangler.jsonc` runs the Astro build first. Keep the Worker `name` as `skies-lp`.
-- `src/lib/tz.ts` is a port of the extension's `src/core/tz.ts`. Keep the formatting (`−13h`, `+3:30h`, `UTC−04`) identical to the extension. `src/lib/sun.ts` (sky states) and `src/data/` (zone coordinates and links) are verbatim copies of the extension's; re-copy them when it changes.
+- `src/lib/tz.ts` is a port of the extension's `src/core/tz.ts`. Keep the formatting (`−13h`, `+3:30h`, `UTC−04`) identical to the extension. `src/lib/sun.ts` (sky states), `src/data/` (zone coordinates and links), `src/lib/extension/` (tz, DST, Core Time logic) and `src/styles/extension/` (popup styles) are verbatim copies of the extension's; re-copy them when it changes. The hero demo and the feature visuals use the extension's own class names, so its stylesheets apply unchanged.
 - Copy must describe only what the extension actually does. Check `../skies-chrome-extension` (README, `docs/spec-v2.md`) before claiming a feature. Pro features aren't shipped yet.
 - Astro's HTML compression drops a line break between text and an inline tag (`text\n<a>` renders as `text<a>`). Keep them on one line, or add `{' '}`.
 

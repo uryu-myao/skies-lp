@@ -1,0 +1,468 @@
+.core-time-panel {
+  flex-shrink: 0;
+  margin: 0 var(--container-padding-horizontal) 16px;
+  border-radius: 12px;
+  background: var(--color-bg-timezone);
+  color: var(--color-font-timezone);
+  overflow: hidden;
+  box-shadow:
+    rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset,
+    rgba(7, 13, 79, 0.05) 0px 0px 20px 3px,
+    rgba(7, 13, 79, 0.05) 0px 0px 40px 20px,
+    rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
+
+  &__header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 36px;
+    padding: 0 14px;
+    background: none;
+    border: none;
+    color: var(--color-font-timezone);
+    cursor: pointer;
+    text-align: left;
+
+    // Chrome doesn't smoothly interpolate background-image between two
+    // gradients (verified: getComputedStyle shows the end value on the very
+    // next frame, no in-between steps, regardless of how structurally
+    // similar the two gradients are) — so the hover fade can't live on
+    // `background` directly. A separate layer faded via opacity sidesteps
+    // that entirely, since opacity *is* always interpolatable.
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(
+        40% 70% at 50% 0,
+        rgba(91, 91, 91, 0.48) 0%,
+        #202025 100%
+      );
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+      pointer-events: none;
+    }
+
+    &:hover:not(:disabled)::before {
+      opacity: 1;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+  }
+
+  &__title {
+    position: relative;
+    z-index: 1;
+    font-family: 'Poppins', serif;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  &__meta {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-family: 'Poppins', serif;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.5;
+  }
+
+  &__chevron {
+    color: var(--color-font-timezone);
+    transition: transform 0.2s ease;
+  }
+
+  &--expanded &__chevron {
+    transform: rotate(180deg);
+  }
+
+  // Band geometry, spelled out so the scroll height below is derived, not
+  // guessed. A row is the 12px name at the reset's 1.15 line-height; the
+  // scale row is its 2px margin, one 10px line and the band's bottom padding.
+  $band-padding-top: 6px;
+  $band-padding-bottom: 12px;
+  $band-row-height: 12px * 1.15;
+  $band-row-gap: 4px;
+  $band-scale-height: 2px + 10px * 1.15 + $band-padding-bottom;
+  $band-visible-rows: 10;
+
+  &__band {
+    // Containing block for the closest marker, which is placed on the grid.
+    position: relative;
+    // 6px, not 4: the marker's cap sits 6px above the first row, and the
+    // scroll container clips at its padding edge.
+    padding: $band-padding-top 14px 0;
+    display: grid;
+    grid-template-columns: minmax(46px, max-content) 1fr;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: $band-row-gap;
+    // Ten rows, then the band scrolls on its own (spec §9.3) — header and
+    // conclusion stay outside it, so the conclusion line (PARTIAL_OVERLAP's
+    // exclude button) is always on screen. +1px so rounding never makes
+    // exactly ten rows scroll.
+    max-height: $band-padding-top + $band-visible-rows *
+      ($band-row-height + $band-row-gap) + $band-scale-height + 1px;
+    overflow-y: auto;
+    // Reaching the end doesn't carry on into the city list.
+    overscroll-behavior: contain;
+
+    // NO_OVERLAP_TODAY adds each city's local time at the closest slot.
+    &--closest {
+      grid-template-columns: minmax(46px, max-content) 1fr max-content;
+    }
+  }
+
+  // Sized to the widest time, bold included, so it never clips.
+  &__row-time {
+    font-family: 'Lato', sans-serif;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    opacity: 0.5;
+
+    &--bottleneck {
+      font-weight: 700;
+      opacity: 1;
+    }
+  }
+
+  // Positioned against the track column across every track row (an
+  // absolutely positioned grid child uses its grid area as containing block).
+  &__marker-layer {
+    position: absolute;
+    // Both lines explicit: for an absolutely positioned item an `auto` end
+    // line is the container's padding edge, which would take in the time
+    // column too.
+    grid-column: 2 / 3;
+    top: -4px;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+  }
+
+  // A point, not a region: one continuous neutral line with a cap, where the
+  // overlap outline is an orange box per row. Orange stays "these hours work
+  // for everyone"; the closest slot is by definition not that.
+  &__marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    transform: translateX(-50%);
+    border-radius: 1px;
+    background: var(--color-font-timezone);
+    opacity: 0.85;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: inherit;
+      transform: translateX(-50%);
+    }
+  }
+
+  &__row {
+    display: contents;
+
+    // display:contents generates no box of its own, so opacity/title on the
+    // row itself would be silently ignored — dim each child directly, with
+    // enough specificity to still win on a row that's also the baseline row.
+    //
+    // A dimmed row — off today, or excluded by the user — still has a
+    // button for a name, so the name must stay readable. Measured on
+    // #202025: white at 50% is 5.1:1, past AA for 12px (45% was 4.4:1, 25%
+    // 2.3:1). The baseline blue would drop to 3.1:1 at 50%, so a dimmed row
+    // goes neutral; its YOU tag still says whose it is. The tags take the
+    // row's 50% as is: their own extra dimming on top put them at 2.4–4.0:1.
+    // The strike-through is drawn in the text colour, so it's 5.1:1 too.
+    // Off and excluded are told apart by the Off tag vs the strike-through
+    // and by how far the band dims — not by the name's brightness.
+    &--off,
+    &--excluded {
+      .core-time-panel__row-label {
+        color: var(--color-font-timezone);
+        opacity: 0.5;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+
+      .core-time-panel__row-baseline-tag,
+      .core-time-panel__row-off-tag {
+        opacity: 1;
+      }
+    }
+
+    &--off .core-time-panel__track {
+      opacity: 0.45;
+    }
+
+    &--excluded {
+      .core-time-panel__row-name,
+      .core-time-panel__row-label:hover .core-time-panel__row-name {
+        text-decoration: line-through;
+      }
+
+      .core-time-panel__track {
+        opacity: 0.25;
+      }
+    }
+  }
+
+  // A button: tapping the name toggles the city in/out of Core Time.
+  &__row-label {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 96px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font-family: 'Poppins', serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    opacity: 0.85;
+
+    &--baseline {
+      color: #9db8ea;
+      opacity: 1;
+    }
+
+    &:hover .core-time-panel__row-name {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
+  // Only the name truncates — the You/Off tags are short, fixed strings
+  // that should never be the thing ellipsis eats when space is tight.
+  &__row-name {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__row-baseline-tag {
+    background: var(--color-bg-info);
+    padding: 2px 4px;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-style: italic;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+  }
+
+  &__row-off-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+
+  &__track {
+    position: relative;
+    height: 10px;
+    border-radius: 100vw;
+    background: var(--gradient-converter);
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 100vw;
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  &__dot {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.6);
+
+    &.hour {
+      width: 3px;
+      height: 3px;
+      background-color: rgba(255, 247, 213, 0.72);
+    }
+  }
+
+  &__segment {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: #5c7cd6;
+  }
+
+  &__overlap {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    outline: 1.5px solid var(--color-secondary);
+    pointer-events: none;
+  }
+
+  // Pinned to the bottom of the scrolling band. It stays in the grid as a
+  // subgrid row rather than moving out: the name column sizes to the longest
+  // name, and a scale outside the grid wouldn't line up with the tracks. One
+  // box across every column, so rows scrolling under it don't show through
+  // the column gaps; it carries the band's bottom padding so it sits in the
+  // same place scrolled or not.
+  &__scale-row {
+    position: sticky;
+    bottom: 0;
+    // Above the tracks and the closest marker scrolling beneath it.
+    z-index: 2;
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    padding-bottom: $band-padding-bottom;
+    background: var(--color-bg-timezone);
+
+    // "More below": the city list's own bottom fade, just above the scale.
+    // Driven by the band's scroll position — full at the top, gone at the
+    // end — and absent when the band doesn't scroll, since an inactive
+    // scroll timeline leaves the base opacity of 0.
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      height: 34px;
+      background: linear-gradient(
+        0deg,
+        var(--color-bg-info),
+        var(--color-opacity) 100%
+      );
+      pointer-events: none;
+      opacity: 0;
+      animation: core-time-band-more linear both;
+      animation-timeline: scroll(nearest block);
+    }
+  }
+
+  &__scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    font-family: 'Lato', sans-serif;
+    font-size: 10px;
+    opacity: 0.45;
+    span {
+      display: inline-block;
+      &:nth-child(2) {
+        padding-left: 9px;
+      }
+      &:nth-child(3) {
+        padding-left: 8px;
+      }
+      &:nth-child(4) {
+        padding-left: 8px;
+      }
+    }
+  }
+
+  &__conclusion-row {
+    padding: 10px 16px 12px;
+  }
+
+  &--expanded &__conclusion-row {
+    border-top: 1px solid var(--color-division);
+  }
+
+  &__conclusion {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  // Wraps rather than truncating: with every range listed ("00:00–07:00,
+  // 22:00–24:00") and labels up to 32 characters, an ellipsis would cut off
+  // exactly the range the line is there to give.
+  &__headline {
+    font-family: 'Poppins', serif;
+    font-size: 12px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  // App's primary accent blue (same token Settings uses for its active
+  // segmented-control/day-toggle states) — orange read as too jarring here.
+  // The ranges stay together, so a wrap falls before them, not mid-range.
+  &__headline-range {
+    color: #9cb2e7;
+    padding-left: 4px;
+    white-space: nowrap;
+  }
+
+  &__detail {
+    font-family: 'Poppins', serif;
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.75;
+  }
+
+  &__muted-line {
+    font-family: 'Poppins', serif;
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.5;
+  }
+
+  // The PARTIAL_OVERLAP hint doubles as the exclude control.
+  &__hint-action {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+}
+
+@keyframes core-time-band-more {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

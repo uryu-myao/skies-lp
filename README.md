@@ -36,19 +36,24 @@ src/
 ├── pages/            index, pro, privacy, tokushoho (特定商取引法に基づく表記, Japanese), 404
 ├── layouts/Base.astro  <head>, meta and Open Graph tags, nav, footer
 ├── components/
-│   ├── PopupDemo.astro  live popup demo: the visitor's zone as Base, plus a converter
+│   ├── PopupDemo.astro  the popup, live: the visitor's zone as Base, DST banner and badges, converter, Core Time
 │   ├── InstallButtons.astro  Chrome and Firefox buttons, the visitor's store first
 │   ├── Features.astro  feature cards; each visual is a still of the extension's popup
-│   ├── SkyCard.astro   one static city card, styled like the extension's, for those visuals
+│   ├── SkyCard.astro   one city card, marked up like the extension's, for the demo and the visuals
 │   ├── Nav.astro
 │   └── Footer.astro
 ├── lib/
-│   ├── tz.ts         gap and UTC offset logic, ported from the extension
+│   ├── extension/    verbatim copies of the extension's tz, types, dst, dstCopy and coretime, plus the parts of model.ts they need
+│   ├── coreTimeCopy.ts  the Core Time panel's wording, from the extension's CoreTimePanel.tsx
+│   ├── tz.ts         card view (gap, UTC offset, date, sky), ported from the extension
 │   ├── sun.ts        the sky from the sun's elevation, copied from the extension
 │   ├── links.ts      Chrome Web Store, Firefox Add-ons, feedback form, contact email
 │   └── notify.ts     where the /pro "Notify me" form posts
 ├── data/             zoneCoordinates.ts and zoneLinks.ts, copied from the extension (generated from tzdata)
-└── styles/global.scss  design tokens and shared styles
+└── styles/
+    ├── global.scss   design tokens and shared styles
+    ├── popup.scss    the extension's popup styles, scoped to .skies-popup
+    └── extension/    verbatim copies of the extension's src/styles/*.scss
 ```
 
-`src/lib/tz.ts` mirrors `src/core/tz.ts` in the extension, and `src/lib/sun.ts` and `src/data/` are copies of the extension's. If the extension changes how it formats gaps or picks skies, or regenerates its zone data, update them here too.
+`src/lib/tz.ts` mirrors `src/core/tz.ts` in the extension. `src/lib/sun.ts`, `src/data/`, `src/lib/extension/` and `src/styles/extension/` are copies of the extension's (only import paths differ). When the extension changes its formatting, skies, DST or Core Time logic, popup styles or zone data, re-copy them; `src/lib/coreTimeCopy.ts` follows `renderConclusion()` in its CoreTimePanel.tsx by hand.

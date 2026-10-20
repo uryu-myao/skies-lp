@@ -1,0 +1,314 @@
+@property --tz-c0 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #3d83e5;
+}
+@property --tz-c1 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #77b6e3;
+}
+@property --tz-c2 {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #d3e2f2;
+}
+
+.timezone {
+  position: relative;
+  color: var(--color-font-timezone);
+  width: 100%;
+  margin: 0 0 6px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  border-radius: 22px;
+  outline: none;
+
+  &:focus-visible .timezone-inner {
+    outline: 2px solid var(--color-primary-blue);
+    outline-offset: 2px;
+  }
+
+  &-inner {
+    position: relative;
+    display: grid;
+    grid-template:
+      'local time' auto
+      'footer footer' 20px / 1fr 1fr;
+    gap: 3px 4px;
+    padding-top: 6px;
+    background: linear-gradient(
+      180deg,
+      var(--tz-c0) 0%,
+      var(--tz-c1) 50%,
+      var(--tz-c2) 100%
+    );
+    border-radius: 22px;
+    corner-shape: squircle;
+    overflow: hidden;
+    box-shadow:
+      rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset,
+      rgba(7, 13, 79, 0.05) 0px 0px 20px 3px,
+      rgba(7, 13, 79, 0.05) 0px 0px 40px 20px,
+      rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
+    transition:
+      --tz-c0 0.6s ease,
+      --tz-c1 0.6s ease,
+      --tz-c2 0.6s ease;
+
+    // Without squircle corners (Firefox; Chrome before 139) a plain arc as
+    // large as the squircle looks far rounder: 12px instead (spec §9.2).
+    // Edit mode's single-row card has its own (EditList.scss).
+    @supports not (corner-shape: squircle) {
+      border-radius: 12px;
+    }
+  }
+
+  &-stars {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+
+    circle {
+      animation: star-twinkle 4s ease-in-out infinite;
+
+      &:nth-child(4n) {
+        animation-duration: 3.2s;
+        animation-delay: -0.8s;
+      }
+      &:nth-child(4n + 1) {
+        animation-duration: 5.1s;
+        animation-delay: -2.3s;
+      }
+      &:nth-child(4n + 2) {
+        animation-duration: 4.4s;
+        animation-delay: -1.5s;
+      }
+      &:nth-child(4n + 3) {
+        animation-duration: 3.8s;
+        animation-delay: -3.1s;
+      }
+    }
+  }
+
+  &-footer {
+    color: rgba(255, 255, 255, 0.85);
+    // background: rgba(0, 170, 255, 0.25);
+    padding: 0 27px 6px 13px;
+    grid-area: footer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-transform: uppercase;
+    font-family: 'Poppins', serif;
+    font-size: 10px;
+    font-weight: 600;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+
+    p,
+    span {
+      margin: 0;
+    }
+  }
+
+  &-data {
+    &__location {
+      grid-area: local;
+      font-family: 'Poppins', serif;
+      font-size: 22px;
+      font-style: normal;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      padding-left: 12px;
+      padding-top: 4px;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    &__time {
+      grid-area: time;
+      font-family: 'Lato', sans-serif;
+      font-size: 30px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      font-style: normal;
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 26px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    &__meridiem {
+      color: var(--color-meridiem-am);
+      position: absolute;
+      font-family: 'Poppins', serif;
+      font-weight: 600;
+      font-style: normal;
+      font-size: 10px;
+      text-transform: uppercase;
+      margin: 0;
+      top: 8px;
+      right: 8px;
+
+      &--am {
+        color: var(--color-meridiem-am);
+      }
+    }
+
+    &__second {
+      position: absolute;
+      top: 24px;
+      right: 10px;
+      font-family: 'Lato', sans-serif;
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      font-style: normal;
+      opacity: 0.5;
+    }
+
+    // Footer left: the gap to the base timezone is what the user actually
+    // reads; the absolute UTC offset stays beside it as an unambiguous
+    // cross-check, one step quieter.
+    &__relative {
+      font-size: 11px;
+      font-weight: 700;
+      font-style: normal;
+      color: var(--color-font-timezone);
+      text-transform: none;
+    }
+
+    &__offset {
+      position: relative;
+      padding-left: 6px;
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+
+    // The DST badge (spec §6.3, layer 1): the date and the gap it becomes,
+    // a quiet pill after the UTC offset. White on translucent white reads on
+    // all four skies, like the rest of the footer.
+    &__dst {
+      padding: 1px 5px;
+      border-radius: 100vw;
+      background: rgba(255, 255, 255, 0.18);
+      color: var(--color-font-timezone);
+      font-size: 10px;
+      font-weight: 600;
+      font-style: normal;
+      text-transform: none;
+      white-space: nowrap;
+
+      // Past the footer's own `span { margin: 0 }`, which outranks a lone
+      // class.
+      .timezone-footer & {
+        margin-left: 8px;
+      }
+    }
+
+    &__tz {
+      position: relative;
+      padding-right: 6px;
+    }
+
+    &__week {
+      position: relative;
+      padding-right: 4px;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: -2px;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 64%;
+        background-color: white;
+        opacity: 0.3;
+      }
+    }
+
+    &__date {
+      padding-left: 7px;
+    }
+
+    &__month {
+      padding-left: 2px;
+    }
+
+    // The one emphasis in the footer: full-strength white against the
+    // surrounding 85%. Same on every sky state.
+    &__day-relative {
+      position: relative;
+      color: var(--color-font-timezone);
+      padding-right: 12px;
+      display: inline-block;
+      text-transform: none;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 5px;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 64%;
+        background-color: white;
+        opacity: 0.3;
+      }
+    }
+  }
+
+  &-subtext {
+    color: var(--color-font-timezone);
+    font-family: 'Poppins', serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.1px;
+    padding: 0 var(--container-padding-horizontal);
+    text-align: center;
+    margin: 0;
+    opacity: 0.35;
+  }
+}
+
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.timezone--night .timezone-inner {
+  --tz-c0: #12111e;
+  --tz-c1: #1d1c27;
+  --tz-c2: #2a2933;
+}
+.timezone--dawn .timezone-inner {
+  --tz-c0: #608ebb;
+  --tz-c1: #b994c3;
+  --tz-c2: #e8cba1;
+}
+.timezone--twilight .timezone-inner {
+  --tz-c0: #102d58;
+  --tz-c1: #3e4f85;
+  --tz-c2: #df524e;
+}
+.timezone--day .timezone-inner {
+  --tz-c0: #3d83e5;
+  --tz-c1: #74b6e6;
+  --tz-c2: #b2d0f0;
+}
+
+.timezone--converting .timezone-inner {
+  transition:
+    --tz-c0 0.2s ease,
+    --tz-c1 0.2s ease,
+    --tz-c2 0.2s ease;
+}

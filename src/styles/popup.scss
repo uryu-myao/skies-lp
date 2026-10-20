@@ -1,0 +1,72 @@
+@use 'sass:meta';
+
+// The extension's popup, styled by its own stylesheets: extension/ holds
+// verbatim copies of its src/styles/*.scss (re-copy them when it changes).
+// Everything but the cards is scoped to .skies-popup, so generic names like
+// .header and .app don't reach the rest of the site. The cards' stylesheet
+// declares @property rules, which can't be nested, and its .timezone names
+// are its own.
+@include meta.load-css('extension/Timezone');
+
+.skies-popup {
+  // The extension's :root (src/styles/index.scss). The logo is the site's
+  // own copy of logo-header.svg.
+  --container-padding-horizontal: 18px;
+  --color-opacity: rgba(255, 255, 255, 0);
+  --color-primary: #2c2b32;
+  --color-primary-blue: #4b6fd2;
+  --color-primary-white: rgba(255, 255, 255, 1);
+  --color-secondary: #ffa400;
+  --color-font-timezone: white;
+  --color-bg-info: rgba(0, 170, 255, 0.12);
+  --color-bg-timezone: #202025;
+  --color-border: rgba(0, 170, 255, 0.1);
+  --color-hover: rgba(255, 255, 255, 0.2);
+  --logo: url('/favicon.svg');
+  --icon-plus: url('/icons/icon-plus-dark.svg');
+  --icon-convert: url('/icons/icon-convert-dark.svg');
+  --icon-setting-header: url('/icons/icon-setting-header.svg');
+  --icon-search: url('/icons/icon-search-dark.svg');
+  --color-division: rgba(255, 255, 255, 0.075);
+  --color-danger: #e5484d;
+  --color-dst-time: #8fd3ff;
+  --color-meridiem-am: rgb(255, 255, 255, 0.6);
+  --gradient-converter: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
+
+  // The extension's normalize.css
+  line-height: 1.15;
+  text-wrap: wrap;
+
+  @include meta.load-css('extension/main');
+  @include meta.load-css('extension/Header');
+  @include meta.load-css('extension/ResetButton');
+  @include meta.load-css('extension/DstBanner');
+  @include meta.load-css('extension/CoreTimePanel');
+  @include meta.load-css('extension/EditList');
+  @include meta.load-css('extension/UndoToast');
+
+  // The popup is 420px wide; here it fits whatever holds it.
+  .app,
+  .header {
+    width: 100%;
+  }
+
+  // The live demo's controls are real buttons; the extension's classes give
+  // them their look, over a bare one.
+  button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  p {
+    margin: 0;
+  }
+}

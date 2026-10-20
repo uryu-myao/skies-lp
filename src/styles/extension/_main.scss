@@ -1,0 +1,92 @@
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+  height: 540px;
+  background: var(--color-primary);
+  overflow: hidden;
+
+  &-content {
+    flex: 1;
+    min-height: 0;
+    padding: 8px 18px 20px;
+    // Vertical only. `overflow: scroll` kept both scrollbars' tracks showing
+    // wherever scrollbars aren't overlays (Windows, some Linux, macOS set to
+    // always show them) — a horizontal one with nothing to scroll: the list
+    // reorders on the vertical axis only (TimezoneList's lockToVerticalAxis).
+    overflow-y: auto;
+    overflow-x: hidden;
+    // The vertical scrollbar's space is always kept, scrolling or not, so the
+    // cards stay the same width when the list grows past the popup and the
+    // scrollbar appears. Only where scrollbars take up space; overlay
+    // scrollbars (macOS's default) are unaffected.
+    scrollbar-gutter: stable;
+    // Not padding-top: it changes as search opens and closes, together with
+    // the header's height, and must not lag behind it.
+    transition: transform 0.24s ease;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 34px;
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      bottom: 0;
+      background: linear-gradient(
+        0deg,
+        var(--color-bg-info),
+        var(--color-opacity) 100%
+      );
+      pointer-events: none;
+    }
+  }
+
+  &--convert-open {
+    .app-content {
+      min-height: 0;
+    }
+  }
+
+  // The list's 8px top padding moves below the search bar (Searchbar.scss):
+  // unscrolled, the list stays where it was; scrolled, it stops 8px short of
+  // the search bar instead of running into it (spec §9.6).
+  &--search-open {
+    .app-content {
+      padding-top: 0;
+    }
+  }
+}
+
+.timezone-list {
+  &__empty {
+    // border: 2px dotted var(--color-secondary);
+    border-radius: 12px;
+    background-color: var(--color-hover);
+
+    &-text {
+      color: var(--color-font-timezone);
+      font-family: 'Poppins', serif;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.5;
+      text-align: center;
+      opacity: 0.72;
+      padding: 24px 10px;
+    }
+
+    &-addicon {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin: 0 4px;
+      vertical-align: -2px;
+      background-image: var(--icon-plus);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+    }
+  }
+}

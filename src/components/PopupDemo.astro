@@ -1,10 +1,19 @@
 ---
-import { cardView, makeStars, type City } from '../lib/tz';
+import SkyCard from './SkyCard.astro';
+import '../styles/popup.scss';
+import { cardView, type City } from '../lib/tz';
+import { coreTimeView } from '../lib/coreTimeCopy';
+import { coreTime } from '../lib/extension/coretime';
+import { DEFAULT_SETTINGS } from '../lib/extension/model';
+import { localHHMM } from '../lib/extension/tz';
+import type { Entry } from '../lib/extension/types';
 
-// What visitors without JavaScript see: 11:00 on a Thursday in Tokyo, which
-// puts London and New York under night skies and San Francisco (19:00) under
-// twilight. The script below swaps in the visitor's own time zone as Base and
-// keeps the cards live.
+// The extension's popup, live: marked up like its App.tsx and styled by its
+// own stylesheets (styles/popup.scss), with its own time, DST and Core Time
+// code (lib/extension/). What visitors without JavaScript see: 11:00 on a
+// Thursday in Tokyo, which puts London and New York under night skies and
+// San Francisco (19:00) under twilight. The script below swaps in the
+// visitor's own time zone as Base and keeps everything live.
 const SNAPSHOT = new Date('2026-09-24T02:00:00Z');
 const REFERENCE = 'Asia/Tokyo';
 const CITIES: City[] = [
@@ -13,80 +22,162 @@ const CITIES: City[] = [
   { city: 'New York', zone: 'America/New_York', lat: 40.71, lon: -74.01 },
   { city: 'San Francisco', zone: 'America/Los_Angeles', lat: 37.77, lon: -122.42 },
 ];
-const cards = CITIES.map((c) => ({ ...cardView(c, REFERENCE, SNAPSHOT), stars: makeStars(c.zone) }));
-const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
+const cards = CITIES.map((c) => cardView(c, REFERENCE, SNAPSHOT));
+
+const entries: Entry[] = CITIES.map((c, i) => ({
+  id: String(i),
+  timezone: c.zone,
+  label: c.city,
+  person: null,
+  workHours: null,
+  workDays: null,
+  includeInCoreTime: true,
+  pinned: false,
+  groups: [],
+  order: i,
+}));
+const settings = { ...DEFAULT_SETTINGS, referenceTimezone: REFERENCE };
+const core = coreTimeView(coreTime({ entries, settings, referenceDate: SNAPSHOT }), entries, settings, REFERENCE, false);
+const convertStops = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 ---
 
 <figure class="demo" data-demo>
-  <div class="popup">
-    <div class="popup__header" aria-hidden="true">
-      <img src="/favicon.svg" alt="" width="31" height="31" />
-      <span class="popup__actions">
-        <img src="/icons/icon-search-dark.svg" alt="" width="21" height="21" />
-        <img src="/icons/icon-convert-dark.svg" alt="" width="21" height="21" />
-        <img src="/icons/icon-setting-header.svg" alt="" width="19" height="19" />
-      </span>
-    </div>
-
-    <div class="converter">
-      <div class="converter__head">
-        <span class="converter__title">Converter</span>
-        <output class="converter__value" data-converter-label>Now</output>
-        <button class="converter__reset" type="button" data-converter-reset hidden>Back to now</button>
-      </div>
-      <div class="converter__track">
-        <span class="converter__dots" aria-hidden="true">{scale.map(() => <span />)}</span>
-        <input
-          class="converter__slider"
-          type="range"
-          min="0"
-          max="48"
-          step="1"
-          value="22"
-          aria-label="Pick a time in your time zone"
-          data-converter
-        />
-      </div>
-      <div class="converter__scale" aria-hidden="true">
-        {scale.map((label) => <span>{label}</span>)}
-      </div>
-    </div>
-
-    <ul class="popup__list" aria-label="City clocks">
-      {
-        cards.map((card) => (
-          <li class="tz" data-card data-sky={card.sky}>
-            <svg class="tz__stars" viewBox="0 0 384 82" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              {card.stars.map((s) => (
-                <circle cx={s.cx} cy={s.cy} r={s.r} fill="white" fill-opacity={s.o} />
-              ))}
-            </svg>
-            <span class="tz__city" data-field="city">{card.city}</span>
-            <span class="tz__time" data-field="time">{card.time}</span>
-            <span class="tz__footer">
-              <span>
-                <span class="tz__relative" data-field="relative">{card.relative}</span>
-                <span class="tz__utc" data-field="utc">{card.utc}</span>
-              </span>
-              <span>
-                <span class="tz__day" data-field="dayLabel" hidden={!card.dayLabel}>{card.dayLabel}</span>
-                <span class="tz__week" data-field="week">{card.week}</span>
-                <span class="tz__date" data-field="date">{card.date}</span>
-                <span class="tz__month" data-field="month">{card.month}</span>
+  <div class="skies-popup demo__popup">
+    <div class="app">
+      <div class="header" data-header>
+        <div class="header-inner">
+          <div class="header-tz-chip">
+            <span class="header-tz-chip__button">
+              <span class="header-tz-chip__logo"></span>
+              <span class="header-tz-chip__pill">
+                <span class="header-tz-chip__city" data-chip-city>Tokyo</span>
+                <span class="header-tz-chip__time" data-chip-time>{localHHMM(REFERENCE, SNAPSHOT)}</span>
+                <svg class="header-tz-chip__chevron" width="8" height="8" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                  <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
               </span>
             </span>
-          </li>
-        ))
-      }
-    </ul>
+          </div>
+          <div class="header-btns">
+            <div class="header-btns__inner">
+              <div><span class="header-btn header-btn__plus"></span></div>
+              <div class="header-convert">
+                <button
+                  type="button"
+                  class="header-btn header-btn__convert"
+                  aria-label="Open the time converter"
+                  aria-expanded="false"
+                  aria-controls="demo-converter"
+                  data-convert-toggle></button>
+                <div class="header-convert__menu" id="demo-converter" hidden data-convert-menu>
+                  <button
+                    type="button"
+                    class="reset-button header-convert__reset"
+                    aria-label="Reset converter to current time"
+                    title="Back to now"
+                    hidden
+                    data-convert-reset>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M2.2 4.6A4 4 0 1 1 2 6.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+                      <path d="M1.8 1.8v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                  </button>
+                  <div class="header-convert__scale" aria-hidden="true">
+                    {[0, 6, 12, 18, 24].map((h) => <span class="header-convert__scale-label">{h}</span>)}
+                  </div>
+                  <div class="header-convert__track" data-convert-track>
+                    {convertStops.map((_, i) => <span class:list={['header-convert__dot', { hour: i % 2 === 0 }]} />)}
+                    <span class="header-convert__thumb" data-convert-thumb><span></span><span></span><span></span></span>
+                    <input
+                      class="demo-range"
+                      type="range"
+                      min="0"
+                      max="48"
+                      step="1"
+                      value="22"
+                      aria-label="Pick a time in your time zone"
+                      data-converter
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="header-btns__inner">
+              <div><span class="header-btn header-btn__settings"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-content">
+        <section class="dst-banner" aria-label="Time difference change" hidden data-banner>
+          <span class="dst-banner__icon" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="5.6" stroke="currentColor" stroke-width="1.3"></circle>
+              <path d="M7 4v3.2l2 1.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+          <div class="dst-banner__text">
+            <p class="dst-banner__headline" data-banner-headline></p>
+            <p class="dst-banner__detail" data-banner-detail></p>
+          </div>
+          <button type="button" class="dst-banner__close" aria-label="Dismiss" data-banner-close>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+            </svg>
+          </button>
+        </section>
+        <div aria-label="City clocks" role="list">
+          {cards.map((card) => <div role="listitem"><SkyCard view={card} /></div>)}
+        </div>
+      </div>
+
+      <div class="core-time-panel" data-core>
+        <button type="button" class="core-time-panel__header" aria-expanded="false" data-core-toggle>
+          <span class="core-time-panel__title">Core time</span>
+          <span class="core-time-panel__meta">
+            <span data-core-count>{core.countText}</span>
+            <svg class="core-time-panel__chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+        </button>
+        <div class="core-time-panel__band" hidden data-core-band></div>
+        <div class="core-time-panel__conclusion-row" data-core-conclusion>
+          <div class="core-time-panel__conclusion">
+            {
+              core.lines.map((line) =>
+                line.kind === 'headline' ? (
+                  <span class="core-time-panel__headline">
+                    {line.text}
+                    {line.range && <span class="core-time-panel__headline-range">{line.range}</span>}
+                  </span>
+                ) : (
+                  <span class={line.kind === 'detail' ? 'core-time-panel__detail' : 'core-time-panel__muted-line'}>
+                    {line.text}
+                  </span>
+                )
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <figcaption class="demo__caption">
-    Live demo: your time zone is Base. Drag the converter to plan ahead.
+    Live demo: your time zone is Base. Open the converter from the clock button to plan ahead.
   </figcaption>
 </figure>
 
 <script>
-  import { cardView, type CardView, type City } from '../lib/tz';
+  import { cardView, type City } from '../lib/tz';
+  import { coreTimeView, type ConclusionLine } from '../lib/coreTimeCopy';
+  import { coreTime, type CoreTimeResult } from '../lib/extension/coretime';
+  import { detectDstTransitions, dismissDstSwitches, pickDstBanner } from '../lib/extension/dst';
+  import { dstBadgeDescription, dstBadgeText, dstBannerCopy, type CopyLine } from '../lib/extension/dstCopy';
+  import { DEFAULT_SETTINGS } from '../lib/extension/model';
+  import { friendlyZoneName, getSystemTimezone, localHHMM, SLOTS_PER_DAY } from '../lib/extension/tz';
+  import type { AppSettings, Entry } from '../lib/extension/types';
 
   // Coordinates as the extension's city search stores them (GeoNames). The
   // visitor's own zone has none, so its sky follows the zone's tzdata location.
@@ -98,96 +189,324 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
     { city: 'Sydney', zone: 'Australia/Sydney', lat: -33.87, lon: 151.21 },
   ];
   const FIELDS = ['city', 'time', 'relative', 'utc', 'dayLabel', 'week', 'date', 'month'] as const;
+  const TRACK_DOT_HOURS = [3, 6, 9, 12, 15, 18, 21];
 
-  function cityName(zone: string): string {
-    if (!zone.includes('/') || zone.startsWith('Etc/')) return 'Your time';
-    return zone.split('/').pop()!.replace(/_/g, ' ');
+  const $ = <T extends Element>(root: ParentNode, selector: string) => root.querySelector<T>(selector)!;
+
+  function el(tag: string, className: string, text?: string): HTMLElement {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
   }
 
-  function nowIndex(): number {
+  // The banner's wording, cities and times set apart (DstBanner.tsx's Parts).
+  function fillParts(target: HTMLElement, parts: CopyLine) {
+    target.replaceChildren(
+      ...parts.map((part) =>
+        part.kind === 'plain' ? document.createTextNode(part.text) : el('span', `dst-banner__${part.kind}`, part.text)
+      )
+    );
+  }
+
+  function nowValue(): number {
     const d = new Date();
     return Math.round((d.getHours() * 60 + d.getMinutes()) / 30);
   }
 
-  function hhmm(date: Date): string {
-    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  }
-
   const root = document.querySelector<HTMLElement>('[data-demo]');
-  const slider = root?.querySelector<HTMLInputElement>('[data-converter]');
-  const label = root?.querySelector<HTMLOutputElement>('[data-converter-label]');
-  const reset = root?.querySelector<HTMLButtonElement>('[data-converter-reset]');
+  if (root) {
+    const popup = $<HTMLElement>(root, '.demo__popup');
+    const fit = () => popup.style.setProperty('--fit', String(Math.min(1, root.clientWidth / 420)));
+    new ResizeObserver(fit).observe(root);
 
-  if (root && slider && label && reset) {
-    const reference = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const cities: City[] = [
-      { city: cityName(reference), zone: reference },
-      ...POOL.filter((c) => c.zone !== reference),
-    ];
+    const header = $<HTMLElement>(root, '[data-header]');
+    const app = $<HTMLElement>(root, '.app');
+    const toggle = $<HTMLButtonElement>(root, '[data-convert-toggle]');
+    const menu = $<HTMLElement>(root, '[data-convert-menu]');
+    const reset = $<HTMLButtonElement>(root, '[data-convert-reset]');
+    const track = $<HTMLElement>(root, '[data-convert-track]');
+    const thumb = $<HTMLElement>(root, '[data-convert-thumb]');
+    const slider = $<HTMLInputElement>(root, '[data-converter]');
+    const banner = $<HTMLElement>(root, '[data-banner]');
+    const coreToggle = $<HTMLButtonElement>(root, '[data-core-toggle]');
+    const coreBand = $<HTMLElement>(root, '[data-core-band]');
+    const coreCount = $<HTMLElement>(root, '[data-core-count]');
+    const coreConclusion = $<HTMLElement>(root, '[data-core-conclusion]');
     const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
-    let converting = false;
 
+    const systemTimezone = getSystemTimezone();
+    const cities: City[] = [
+      { city: friendlyZoneName(systemTimezone), zone: systemTimezone },
+      ...POOL.filter((c) => c.zone !== systemTimezone),
+    ].slice(0, cards.length);
+    let entries: Entry[] = cities.map((c, i) => ({
+      id: String(i),
+      timezone: c.zone,
+      label: c.city,
+      person: null,
+      workHours: null,
+      workDays: null,
+      includeInCoreTime: true,
+      pinned: false,
+      groups: [],
+      order: i,
+      lat: c.lat,
+      lon: c.lon,
+    }));
+    let settings: AppSettings = { ...DEFAULT_SETTINGS };
+    let converting = false;
+    let initialValue = nowValue();
+    let coreExpanded = false;
+    const badges = new Map<string, { text: string; title: string } | null>();
+
+    const labelOf = (entryId: string) => entries.find((entry) => entry.id === entryId)?.label ?? '';
+
+    // ---- Cards ------------------------------------------------------------
     const converterDate = () => {
       const d = new Date();
       d.setHours(0, Number(slider.value) * 30, 0, 0);
       return d;
     };
 
-    const paint = (card: HTMLElement, view: CardView) => {
-      card.dataset.sky = view.sky;
-      for (const field of FIELDS) {
-        const el = card.querySelector<HTMLElement>(`[data-field="${field}"]`);
-        if (!el || el.textContent === view[field]) continue;
-        el.textContent = view[field];
-        if (field === 'dayLabel') el.hidden = !view.dayLabel;
-      }
-    };
-
-    const render = () => {
+    const paintCards = () => {
       const date = converting ? converterDate() : new Date();
-      cards.forEach((card, i) => paint(card, cardView(cities[i], reference, date)));
-      root.toggleAttribute('data-converting', converting);
-      const text = converting ? `${hhmm(date)} your time` : 'Now';
-      label.value = text;
-      slider.setAttribute('aria-valuetext', text);
-      reset.hidden = !converting;
+      cards.forEach((card, i) => {
+        const view = cardView(cities[i], systemTimezone, date);
+        card.classList.remove('timezone--night', 'timezone--dawn', 'timezone--day', 'timezone--twilight');
+        card.classList.add(`timezone--${view.sky}`);
+        card.classList.toggle('timezone--converting', converting);
+        for (const field of FIELDS) {
+          const node = card.querySelector<HTMLElement>(`[data-field="${field}"]`);
+          if (!node || node.textContent === view[field]) continue;
+          node.textContent = view[field];
+          if (field === 'dayLabel') node.hidden = !view.dayLabel;
+        }
+        const badge = badges.get(entries[i].id) ?? null;
+        const badgeNode = card.querySelector<HTMLElement>('[data-field="badge"]');
+        if (badgeNode) {
+          badgeNode.textContent = badge?.text ?? '';
+          badgeNode.title = badge?.title ?? '';
+          badgeNode.hidden = !badge;
+        }
+      });
+      $<HTMLElement>(root, '[data-chip-time]').textContent = localHHMM(systemTimezone, new Date());
     };
 
-    slider.value = String(nowIndex());
-    slider.addEventListener('input', () => {
-      converting = true;
-      render();
-    });
-    reset.addEventListener('click', () => {
-      converting = false;
-      slider.value = String(nowIndex());
-      render();
+    // ---- DST banner and badges (App.tsx) ----------------------------------
+    const paintDst = () => {
+      const dst = detectDstTransitions({ entries, settings, fromDate: new Date() });
+      for (const { entryId, gapChanges } of dst.entries) {
+        // The badge looks ahead only: a change already in effect shows on the card itself.
+        const next = gapChanges.find((change) => !change.inEffect) ?? null;
+        badges.set(entryId, next && { text: dstBadgeText(next), title: dstBadgeDescription(next) });
+      }
+      const day = pickDstBanner(dst, settings);
+      banner.hidden = !day;
+      if (!day) return;
+      const { headline, detail } = dstBannerCopy(day, labelOf);
+      fillParts($(banner, '[data-banner-headline]'), headline);
+      fillParts($(banner, '[data-banner-detail]'), detail);
+      banner.classList.toggle('dst-banner--in-effect', day.inEffect !== 'none');
+      $<HTMLButtonElement>(banner, '[data-banner-close]').onclick = () => {
+        settings = dismissDstSwitches(settings, day.switchKeys, new Date());
+        paintDst();
+      };
+    };
+
+    // ---- Core Time (CoreTimePanel.tsx) ------------------------------------
+    const toggleCity = (entryId: string) => {
+      entries = entries.map((entry) =>
+        entry.id === entryId ? { ...entry, includeInCoreTime: !entry.includeInCoreTime } : entry
+      );
+      paintCore();
+    };
+
+    const renderLines = (lines: ConclusionLine[]) => {
+      const box = el('div', 'core-time-panel__conclusion');
+      for (const line of lines) {
+        if (line.kind === 'headline') {
+          const headline = el('span', 'core-time-panel__headline', line.text);
+          if (line.range) headline.append(' ', el('span', 'core-time-panel__headline-range', line.range));
+          box.append(headline);
+        } else if (line.kind === 'muted' && line.toggles) {
+          const hint = el('button', 'core-time-panel__muted-line core-time-panel__hint-action', line.text);
+          (hint as HTMLButtonElement).type = 'button';
+          const id = line.toggles;
+          hint.addEventListener('click', () => toggleCity(id));
+          box.append(hint);
+        } else {
+          box.append(el('span', line.kind === 'detail' ? 'core-time-panel__detail' : 'core-time-panel__muted-line', line.text));
+        }
+      }
+      coreConclusion.replaceChildren(box);
+    };
+
+    const blocksToRanges = (blocks: boolean[]) => {
+      const ranges: { start: number; end: number }[] = [];
+      let start: number | null = null;
+      for (let i = 0; i <= blocks.length; i++) {
+        const on = i < blocks.length && blocks[i];
+        if (on && start === null) start = i;
+        else if (!on && start !== null) {
+          ranges.push({ start, end: i });
+          start = null;
+        }
+      }
+      return ranges;
+    };
+    const pct = (slot: number) => `${(slot / SLOTS_PER_DAY) * 100}%`;
+
+    const renderBand = (result: CoreTimeResult, view: ReturnType<typeof coreTimeView>) => {
+      const { conclusion } = result;
+      const closest = conclusion.status === 'NO_OVERLAP_TODAY' ? conclusion.closest : null;
+      const overlapOf = (entryId: string, included: boolean) => {
+        if (!included) return [];
+        if (conclusion.status === 'PARTIAL_OVERLAP') return conclusion.includedIds.includes(entryId) ? conclusion.overlap : [];
+        if (conclusion.status === 'PARTIAL_OFF')
+          return conclusion.workingEntryIds.includes(entryId) ? conclusion.workingOverlap : [];
+        return result.overlap;
+      };
+
+      coreBand.className = `core-time-panel__band${closest ? ' core-time-panel__band--closest' : ''}`;
+      const children: HTMLElement[] = [];
+      for (const row of result.rows) {
+        const role = view.roleOf(row.entryId);
+        const label = view.labelOf(row.entryId);
+        const rowEl = el(
+          'div',
+          `core-time-panel__row${row.offToday ? ' core-time-panel__row--off' : ''}${row.included ? '' : ' core-time-panel__row--excluded'}`
+        );
+        const button = el('button', `core-time-panel__row-label${role ? ' core-time-panel__row-label--baseline' : ''}`);
+        (button as HTMLButtonElement).type = 'button';
+        button.setAttribute('aria-pressed', String(row.included));
+        button.setAttribute('aria-label', `${label}: ${row.included ? 'included in' : 'excluded from'} core time`);
+        const name = el('span', 'core-time-panel__row-name', label);
+        name.title = label;
+        button.append(name);
+        if (role) button.append(el('span', 'core-time-panel__row-baseline-tag', role === 'you' ? 'You' : 'Base'));
+        if (row.offToday) button.append(el('span', 'core-time-panel__row-off-tag', 'Off'));
+        button.addEventListener('click', () => toggleCity(row.entryId));
+
+        const trackEl = el('div', 'core-time-panel__track');
+        if (row.offToday) trackEl.title = 'Not a work day';
+        for (const hour of TRACK_DOT_HOURS) {
+          const dot = el('span', `core-time-panel__dot${hour % 6 === 0 ? ' hour' : ''}`);
+          dot.style.left = `${(hour / 24) * 100}%`;
+          trackEl.append(dot);
+        }
+        for (const range of blocksToRanges(row.blocks)) {
+          const segment = el('span', 'core-time-panel__segment');
+          segment.style.left = pct(range.start);
+          segment.style.width = pct(range.end - range.start);
+          trackEl.append(segment);
+        }
+        for (const range of overlapOf(row.entryId, row.included)) {
+          const box = el('span', 'core-time-panel__overlap');
+          box.style.left = pct(range.startSlot);
+          box.style.width = pct(range.endSlot - range.startSlot);
+          trackEl.append(box);
+        }
+        rowEl.append(button, trackEl);
+        if (closest) {
+          const at = closest.perEntry.find((p) => p.entryId === row.entryId);
+          const bottleneck = closest.bottleneckEntryIds.includes(row.entryId);
+          rowEl.append(
+            el('span', `core-time-panel__row-time${bottleneck ? ' core-time-panel__row-time--bottleneck' : ''}`, at?.localTime ?? '')
+          );
+        }
+        children.push(rowEl);
+      }
+
+      const scaleRow = el('div', 'core-time-panel__scale-row');
+      const scale = el('div', 'core-time-panel__scale');
+      for (const hour of [0, 6, 12, 18, 24]) scale.append(el('span', '', String(hour)));
+      scaleRow.append(el('span', ''), scale);
+      if (closest) scaleRow.append(el('span', ''));
+      children.push(scaleRow);
+
+      if (closest) {
+        const layer = el('span', 'core-time-panel__marker-layer');
+        layer.style.gridRow = `1 / span ${result.rows.length}`;
+        const marker = el('span', 'core-time-panel__marker');
+        marker.style.left = pct(closest.slot + 0.5);
+        layer.append(marker);
+        children.push(layer);
+      }
+      coreBand.replaceChildren(...children);
+    };
+
+    const paintCore = () => {
+      const result = coreTime({ entries, settings, referenceDate: new Date() });
+      const view = coreTimeView(result, entries, settings, systemTimezone, coreExpanded);
+      coreCount.textContent = view.countText;
+      root.querySelector('[data-core]')!.classList.toggle('core-time-panel--expanded', coreExpanded);
+      coreToggle.setAttribute('aria-expanded', String(coreExpanded));
+      coreBand.hidden = !coreExpanded;
+      if (coreExpanded) renderBand(result, view);
+      renderLines(view.lines);
+    };
+
+    coreToggle.addEventListener('click', () => {
+      coreExpanded = !coreExpanded;
+      paintCore();
     });
 
-    render();
+    // ---- Converter (Header.tsx) -------------------------------------------
+    const paintConverter = () => {
+      header.classList.toggle('header--convert-open', converting);
+      app.classList.toggle('app--convert-open', converting);
+      toggle.classList.toggle('active', converting);
+      toggle.setAttribute('aria-expanded', String(converting));
+      toggle.setAttribute('aria-label', converting ? 'Close the time converter' : 'Open the time converter');
+      menu.hidden = !converting;
+      track.style.setProperty('--p', String(Number(slider.value) / 48));
+      reset.hidden = Number(slider.value) === initialValue;
+      const text = `${converterDate().toTimeString().slice(0, 5)} your time`;
+      slider.setAttribute('aria-valuetext', text);
+    };
+
+    toggle.addEventListener('click', () => {
+      converting = !converting;
+      if (converting) {
+        initialValue = nowValue();
+        slider.value = String(initialValue);
+      }
+      paintConverter();
+      paintCards();
+    });
+    slider.addEventListener('input', () => {
+      paintConverter();
+      paintCards();
+    });
+    slider.addEventListener('pointerdown', () => thumb.classList.add('dragging'));
+    window.addEventListener('pointerup', () => thumb.classList.remove('dragging'));
+    reset.addEventListener('click', () => {
+      initialValue = nowValue();
+      slider.value = String(initialValue);
+      paintConverter();
+      paintCards();
+      slider.focus();
+    });
+
+    // Live: the clocks every second, DST and Core Time every minute.
+    paintDst();
+    paintCore();
+    paintConverter();
+    paintCards();
     setInterval(() => {
-      if (!converting) render();
+      if (!converting) paintCards();
+      else $<HTMLElement>(root, '[data-chip-time]').textContent = localHHMM(systemTimezone, new Date());
     }, 1000);
+    setInterval(() => {
+      paintDst();
+      paintCore();
+      paintCards();
+    }, 60_000);
   }
 </script>
 
 <style lang="scss">
-  @property --tz-c0 {
-    syntax: '<color>';
-    inherits: false;
-    initial-value: #3d83e5;
-  }
-  @property --tz-c1 {
-    syntax: '<color>';
-    inherits: false;
-    initial-value: #74b6e6;
-  }
-  @property --tz-c2 {
-    syntax: '<color>';
-    inherits: false;
-    initial-value: #b2d0f0;
-  }
-
   .demo {
     position: relative;
     margin: 0;
@@ -207,6 +526,18 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
       filter: blur(40px);
     }
 
+    // Always the popup's own 420px, so nothing wraps that doesn't in the
+    // extension; narrower screens see it zoomed out to fit (the script sets
+    // --fit; the media query is the no-script guess for a 375px phone).
+    &__popup {
+      width: 420px;
+      zoom: var(--fit, 1);
+
+      @media (max-width: 451px) {
+        zoom: var(--fit, 0.82);
+      }
+    }
+
     &__caption {
       margin-top: 18px;
       font-size: 14px;
@@ -215,368 +546,54 @@ const scale = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
     }
   }
 
-  .popup {
-    width: min(420px, 100%);
-    padding-bottom: 14px;
-    background: var(--color-popup);
+  // The popup window itself: 420 × 540, as the extension sizes it (main.scss).
+  .app {
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
       0 30px 80px -20px rgba(0, 0, 0, 0.7),
       0 0 0 1px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-
-    &__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 60px;
-      padding: 0 18px;
-    }
-
-    &__actions {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 6px 12px;
-      background: rgba(0, 170, 255, 0.12);
-      border-radius: 100vw;
-    }
-
-    &__list {
-      list-style: none;
-      margin: 0;
-      padding: 0 18px;
-    }
   }
 
-  .converter {
-    margin: 0 18px 12px;
-    padding: 12px 14px 10px;
-    border-radius: 16px;
-    background: #202025;
+  // The slider is a real range input laid over the extension's track, so it
+  // works by keyboard and screen reader; its own thumb is invisible, the
+  // extension's thumb follows it. Wider than the track by 6px a side, so the
+  // input's thumb centre runs between the first and last dots (12px in).
+  .demo-range {
+    position: absolute;
+    inset: -5px -6px;
+    z-index: 3;
+    width: calc(100% + 12px);
+    height: 22px;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
 
-    &__head {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-height: 26px;
-      font-family: var(--font-display);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    &__title {
-      color: rgba(255, 255, 255, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    &__value {
-      color: #fff;
-    }
-
-    &__reset {
-      margin-left: auto;
-      padding: 4px 10px;
-      border: 0;
-      border-radius: 100vw;
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
-      font: inherit;
-      cursor: pointer;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-    }
-
-    // The thumb's centre travels from half a thumb in at each end, so the
-    // dots and the scale are inset by the same amount to line up with it.
-    &__track {
-      --thumb: 20px;
-      position: relative;
-      height: 28px;
-      margin-top: 4px;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 12px;
-        border-radius: 100vw;
-        background: linear-gradient(90deg,
-    #23212a 0%,
-    #6d6891 50%,
-    #23212a 100%);
-        transform: translateY(-50%);
-      }
-    }
-
-    &__dots {
-      position: absolute;
-      inset: 0 calc(var(--thumb) / 2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      span {
-        width: 0;
-        display: flex;
-        justify-content: center;
-
-        &::before {
-          content: '';
-          flex: none;
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.55);
-        }
-      }
-    }
-
-    &__slider {
-      position: relative;
-      display: block;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      background: transparent;
-      appearance: none;
+    &::-webkit-slider-thumb {
       -webkit-appearance: none;
-      cursor: pointer;
-
-      &::-moz-range-track {
-        background: transparent;
-      }
-
-      &::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: var(--thumb);
-        height: var(--thumb);
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-      }
-
-      &::-moz-range-thumb {
-        width: var(--thumb);
-        height: var(--thumb);
-        border: 0;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-      }
+      width: 36px;
+      height: 22px;
     }
 
-    &__scale {
-      display: flex;
-      justify-content: space-between;
-      padding: 0 9px;
-      font-family: var(--font-display);
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.4);
-
-      span {
-        width: 0;
-        display: flex;
-        justify-content: center;
-      }
+    &::-moz-range-thumb {
+      width: 36px;
+      height: 22px;
+      border: 0;
     }
   }
 
-  // Card styles follow the extension's src/styles/Timezone.scss
-  .tz {
-    --tz-c0: var(--sky-day-0);
-    --tz-c1: var(--sky-day-1);
-    --tz-c2: var(--sky-day-2);
-    position: relative;
-    display: grid;
-    grid-template:
-      'city time' auto
-      'footer footer' 20px / 1fr auto;
-    gap: 3px 4px;
-    margin: 0 0 6px;
-    padding: 2px 0;
-    color: #fff;
-    background: linear-gradient(180deg, var(--tz-c0) 0%, var(--tz-c1) 50%, var(--tz-c2) 100%);
-    border-radius: 22px;
-    corner-shape: squircle;
-    overflow: hidden;
-    box-shadow:
-      rgba(255, 255, 255, 0.1) 0 1px 0 0 inset,
-      rgba(7, 13, 79, 0.05) 0 0 20px 3px,
-      rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
-    transition:
-      --tz-c0 0.6s ease,
-      --tz-c1 0.6s ease,
-      --tz-c2 0.6s ease;
-
-    [data-converting] & {
-      transition-duration: 0.2s;
-    }
-
-    &[data-sky='night'] {
-      --tz-c0: var(--sky-night-0);
-      --tz-c1: var(--sky-night-1);
-      --tz-c2: var(--sky-night-2);
-    }
-    &[data-sky='dawn'] {
-      --tz-c0: var(--sky-dawn-0);
-      --tz-c1: var(--sky-dawn-1);
-      --tz-c2: var(--sky-dawn-2);
-    }
-    &[data-sky='twilight'] {
-      --tz-c0: var(--sky-twilight-0);
-      --tz-c1: var(--sky-twilight-1);
-      --tz-c2: var(--sky-twilight-2);
-    }
-
-    &__stars {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.6s ease;
-
-      [data-sky='night'] & {
-        opacity: 1;
-      }
-
-      circle {
-        animation: twinkle 4s ease-in-out infinite;
-
-        &:nth-child(4n) {
-          animation-duration: 3.2s;
-          animation-delay: -0.8s;
-        }
-        &:nth-child(4n + 1) {
-          animation-duration: 5.1s;
-          animation-delay: -2.3s;
-        }
-        &:nth-child(4n + 2) {
-          animation-duration: 4.4s;
-          animation-delay: -1.5s;
-        }
-        &:nth-child(4n + 3) {
-          animation-duration: 3.8s;
-          animation-delay: -3.1s;
-        }
-      }
-    }
-
-    &__city {
-      grid-area: city;
-      position: relative;
-      padding: 4px 0 0 12px;
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    &__time {
-      grid-area: time;
-      position: relative;
-      padding-right: 26px;
-      font-family: var(--font-body);
-      font-size: 30px;
-      font-weight: 400;
-      letter-spacing: 0.5px;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    &__footer {
-      grid-area: footer;
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 27px 6px 13px;
-      color: rgba(255, 255, 255, 0.85);
-      font-family: var(--font-display);
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
-    }
-
-    &__relative {
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: none;
-    }
-
-    &__utc {
-      padding-left: 6px;
-      font-weight: 500;
-      opacity: 0.75;
-    }
-
-    &__day,
-    &__week {
-      position: relative;
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        width: 1px;
-        height: 64%;
-        background: #fff;
-        opacity: 0.3;
-        transform: translateY(-50%);
-      }
-    }
-
-    &__day {
-      display: inline-block;
-      padding-right: 12px;
-      color: #fff;
-      text-transform: none;
-
-      &::after {
-        right: 5px;
-      }
-
-      &[hidden] {
-        display: none;
-      }
-    }
-
-    &__week {
-      padding-right: 4px;
-
-      &::after {
-        right: -2px;
-      }
-    }
-
-    &__date {
-      padding-left: 7px;
-    }
-
-    &__month {
-      padding-left: 2px;
-    }
+  // A drag that starts on the scale moves nothing; it shouldn't select it either.
+  .header-convert__menu {
+    user-select: none;
   }
 
-  @keyframes twinkle {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.15;
-    }
+  .header-convert__track [data-convert-thumb] {
+    left: calc(12px + (100% - 24px) * var(--p, 0) - 18px);
+  }
+
+  [data-convert-track]:has(.demo-range:focus-visible) [data-convert-thumb] {
+    outline: 2px solid var(--color-primary-blue);
+    outline-offset: 2px;
   }
 </style>

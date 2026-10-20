@@ -1,12 +1,14 @@
 ---
 import SkyCard from './SkyCard.astro';
+import '../styles/popup.scss';
 import { cardView, type City } from '../lib/tz';
 
 const skies = ['Night', 'Dawn', 'Day', 'Twilight'];
 
-// The other visuals are stills of the extension's popup at its own sizes, seen by
-// someone in Tokyo. Cards are worked out for a fixed moment, so their skies,
-// gaps and dates are the ones the extension shows then.
+// The other visuals are stills of the extension's popup, marked up like it
+// and styled by its own stylesheets (styles/popup.scss), seen by someone in
+// Tokyo. Cards are worked out for a fixed moment, so their skies, gaps and
+// dates are the ones the extension shows then.
 const TOKYO: City = { city: 'Tokyo', zone: 'Asia/Tokyo', lat: 35.69, lon: 139.69 };
 const BOSTON: City = { city: 'Boston', zone: 'America/New_York', lat: 42.36, lon: -71.06 };
 const KOLKATA: City = { city: 'Kolkata', zone: 'Asia/Kolkata', lat: 22.57, lon: 88.36 };
@@ -49,7 +51,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     <div class="features__grid">
       <article class="feature">
         <div class="feature__visual" aria-hidden="true">
-          <div class="popup popup--list">
+          <div class="skies-popup scene scene--list">
             {gaps.map((view) => <SkyCard view={view} />)}
           </div>
         </div>
@@ -82,7 +84,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
 
       <article class="feature">
         <div class="feature__visual feature__visual--dst" aria-hidden="true">
-          <div class="popup popup--list">
+          <div class="skies-popup scene scene--list">
             <div class="dst-banner">
               <span class="dst-banner__icon">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -113,42 +115,44 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
 
       <article class="feature">
         <div class="feature__visual" aria-hidden="true">
-          <div class="popup">
-            <div class="core-time">
-              <div class="core-time__header">
-                <span class="core-time__title">Core time</span>
-                <span class="core-time__meta">
+          <div class="skies-popup scene">
+            <div class="core-time-panel core-time-panel--expanded">
+              <div class="core-time-panel__header">
+                <span class="core-time-panel__title">Core time</span>
+                <span class="core-time-panel__meta">
                   today · 3 cities
-                  <svg class="core-time__chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <svg class="core-time-panel__chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
                   </svg>
                 </span>
               </div>
-              <div class="core-time__band">
+              <div class="core-time-panel__band">
                 {
                   coreRows.map((row) => (
-                    <>
-                      <span class:list={['core-time__label', { 'core-time__label--you': row.you }]}>
-                        {row.city}
-                        {row.you && <span class="core-time__you">You</span>}
+                    <div class="core-time-panel__row">
+                      <span class:list={['core-time-panel__row-label', { 'core-time-panel__row-label--baseline': row.you }]}>
+                        <span class="core-time-panel__row-name">{row.city}</span>
+                        {row.you && <span class="core-time-panel__row-baseline-tag">You</span>}
                       </span>
-                      <span class="core-time__track">
+                      <span class="core-time-panel__track">
                         {coreDots.map((h) => (
-                          <span class:list={['core-time__dot', { hour: h % 6 === 0 }]} style={`left:${pct(h)}`} />
+                          <span class:list={['core-time-panel__dot', { hour: h % 6 === 0 }]} style={`left:${pct(h)}`} />
                         ))}
                         {row.hours.map(([from, to]) => (
-                          <span class="core-time__segment" style={`left:${pct(from)};width:${pct(to - from)}`} />
+                          <span class="core-time-panel__segment" style={`left:${pct(from)};width:${pct(to - from)}`} />
                         ))}
-                        <span class="core-time__overlap" style={`left:${pct(overlap.from)};width:${pct(overlap.to - overlap.from)}`} />
+                        <span class="core-time-panel__overlap" style={`left:${pct(overlap.from)};width:${pct(overlap.to - overlap.from)}`} />
                       </span>
-                    </>
+                    </div>
                   ))
                 }
-                <span></span>
-                <span class="core-time__scale">{[0, 6, 12, 18, 24].map((h) => <span>{h}</span>)}</span>
+                <div class="core-time-panel__scale-row">
+                  <span></span>
+                  <div class="core-time-panel__scale">{[0, 6, 12, 18, 24].map((h) => <span>{h}</span>)}</div>
+                </div>
               </div>
-              <div class="core-time__conclusion">
-                <span class="core-time__headline">Overlap <span class="core-time__range">16:00–18:00</span></span>
+              <div class="core-time-panel__conclusion-row">
+                <span class="core-time-panel__headline">Overlap <span class="core-time-panel__headline-range">16:00–18:00</span></span>
               </div>
             </div>
           </div>
@@ -162,42 +166,53 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
 
       <article class="feature">
         <div class="feature__visual feature__visual--converter" aria-hidden="true">
-          <div class="popup popup--panel">
-            <div class="header">
-              <span class="header__chip">
-                <img src="/favicon.svg" alt="" width="22" height="22" />
-                <span class="header__pill">
-                  <span class="header__city">Tokyo</span>
-                  <span class="header__time">23:57</span>
-                  <svg class="header__chevron" width="8" height="8" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
-                  </svg>
-                </span>
-              </span>
-              <span class="header__btns">
-                <span class="header__group">
-                  <span class="header__btn header__btn--plus"></span>
-                  <span class="header__btn header__btn--convert"></span>
-                </span>
-                <span class="header__group">
-                  <span class="header__btn header__btn--settings"></span>
-                </span>
-              </span>
+          <div class="skies-popup scene scene--panel">
+            <div class="header header--convert-open">
+              <div class="header-inner">
+                <div class="header-tz-chip">
+                  <span class="header-tz-chip__button">
+                    <span class="header-tz-chip__logo"></span>
+                    <span class="header-tz-chip__pill">
+                      <span class="header-tz-chip__city">Tokyo</span>
+                      <span class="header-tz-chip__time">23:57</span>
+                      <svg class="header-tz-chip__chevron" width="8" height="8" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                      </svg>
+                    </span>
+                  </span>
+                </div>
+                <div class="header-btns">
+                  <div class="header-btns__inner">
+                    <div><span class="header-btn header-btn__plus"></span></div>
+                    <div class="header-convert">
+                      <span class="header-btn header-btn__convert active"></span>
+                      <div class="header-convert__menu">
+                        <span class="reset-button header-convert__reset">
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.2 4.6A4 4 0 1 1 2 6.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+                            <path d="M1.8 1.8v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                          </svg>
+                        </span>
+                        <div class="header-convert__scale">
+                          {[0, 6, 12, 18, 24].map((h) => <span class="header-convert__scale-label">{h}</span>)}
+                        </div>
+                        <div class="header-convert__track">
+                          {convertStops.map((_, i) => <span class:list={['header-convert__dot', { hour: i % 2 === 0 }]} />)}
+                          <!-- On the 15:00 stop, the sixth of nine: dot centres run from 12px in at each end. -->
+                          <span class="header-convert__thumb" style="left: calc(12px + (100% - 24px) * 0.625 - 18px)"
+                            ><span></span><span></span><span></span></span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="header-btns__inner">
+                    <div><span class="header-btn header-btn__settings"></span></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="converter">
-              <span class="converter__reset">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2.2 4.6A4 4 0 1 1 2 6.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
-                  <path d="M1.8 1.8v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
-              </span>
-              <span class="converter__scale">{[0, 6, 12, 18, 24].map((h) => <span>{h}</span>)}</span>
-              <span class="converter__track">
-                {convertStops.map((_, i) => <span class:list={['converter__dot', { hour: i % 2 === 0 }]} />)}
-                <span class="converter__thumb"><span></span><span></span><span></span></span>
-              </span>
-            </div>
-            <div class="popup--list popup--converted">
+            <div class="scene__list scene__list--converted">
               <SkyCard view={converted} converting />
             </div>
           </div>
@@ -211,18 +226,20 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
 
       <article class="feature">
         <div class="feature__visual" aria-hidden="true">
-          <div class="popup popup--panel popup--edit">
-            <div class="edit-bar">
-              <span class="edit-bar__title">Edit list</span>
-              <span class="edit-bar__done">Done</span>
+          <div class="skies-popup scene scene--panel">
+            <div class="edit-list-bar">
+              <span class="edit-list-bar__title">Edit list</span>
+              <span class="edit-list-bar__done">Done</span>
             </div>
-            <div class="popup--list">
+            <div class="scene__list scene__list--edit">
               {
                 editing.map((view) => (
-                  <div class="edit-row">
-                    <span class="edit-row__remove" />
-                    <SkyCard view={view} compact />
-                    <span class="edit-row__handle">
+                  <div class="timezone-row timezone-row--editing">
+                    <span class="timezone-row__remove" />
+                    <div class="timezone-row__card">
+                      <SkyCard view={view} compact />
+                    </div>
+                    <span class="timezone-row__handle">
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                         <path d="M2 4h10M2 7h10M2 10h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                       </svg>
@@ -231,7 +248,11 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
                 ))
               }
             </div>
-            <span class="undo-toast">Removed Berlin <span class="undo-toast__sep">·</span> <span class="undo-toast__undo">Undo</span></span>
+            <div class="undo-toast undo-toast--open">
+              <span class="undo-toast__message">Removed Berlin</span>
+              <span class="undo-toast__sep">·</span>
+              <span class="undo-toast__undo">Undo</span>
+            </div>
           </div>
         </div>
         <h3>Your list, your way</h3>
@@ -282,7 +303,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       font-size: 20px;
     }
 
-    p {
+    > p {
       margin: 0 4px;
       font-size: 16px;
       color: var(--color-text-muted);
@@ -336,18 +357,17 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     }
   }
 
-  // The popup's own type and spacing (the extension's normalize.css sets a
-  // 1.15 line height).
-  .popup {
+  // One piece of the popup.
+  .scene {
     flex: none;
     position: relative;
     width: 100%;
     min-width: 300px;
     color: #fff;
-    font-family: var(--font-display);
-    line-height: 1.15;
 
-    &--list {
+    // Cards in the list's own 18px gutter.
+    &--list,
+    &__list {
       padding: 0 18px;
 
       > :global(:last-child) {
@@ -356,30 +376,29 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     }
 
     // A piece that includes the popup's chrome (header, edit bar) is shown as
-    // a small popup of its own.
-    // Its header is 4px narrower a side than the popup's, so the whole 300px
+    // a small popup of its own. Its gutter is 14px, not 18, so the whole
     // header row fits a phone-width card.
     &--panel {
+      --container-padding-horizontal: 14px;
       min-width: 0;
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 16px;
-      background: var(--color-popup);
+      background: var(--color-primary);
       overflow: hidden;
       box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.6);
-
-      .header {
-        padding: 0 14px;
-      }
     }
 
-    // The header's 80px padding while the converter is open, then the list's 8px.
-    &--converted {
-      padding: 8px 18px 14px;
+    // The list's 8px top padding, below the header and its 80px for the converter.
+    &__list--converted {
+      padding-top: 8px;
+      padding-bottom: 14px;
     }
 
-    // Room below the list, so the toast covers only the last row's lower half.
-    &--edit {
-      padding: 68px 0 34px;
+    // Below the 60px edit bar; room underneath, so the toast covers only the
+    // last row's lower half.
+    &__list--edit {
+      padding-top: 68px;
+      padding-bottom: 34px;
     }
   }
 
@@ -396,530 +415,5 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     font-weight: 600;
     color: #fff;
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
-  }
-
-  // DstBanner.scss
-  .dst-banner {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 8px;
-    padding: 10px 8px 10px 12px;
-    border: 1px solid rgba(0, 170, 255, 0.1);
-    border-radius: 12px;
-    background: rgba(0, 170, 255, 0.12);
-
-    &__icon {
-      flex: none;
-      display: flex;
-      margin-top: 1px;
-      opacity: 0.7;
-    }
-
-    &__text {
-      flex: 1;
-      min-width: 0;
-    }
-
-    &__headline {
-      margin: 0 0 6px;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.85);
-      text-wrap: wrap;
-    }
-
-    &__detail {
-      margin: 2px 0 0;
-      font-size: 11px;
-      font-weight: 400;
-      line-height: 1.45;
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    &__city {
-      font-weight: 600;
-      color: #fff;
-      white-space: nowrap;
-    }
-
-    &__time {
-      font-weight: 600;
-      color: #8fd3ff;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
-
-    &__close {
-      flex: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      opacity: 0.6;
-    }
-  }
-
-  // CoreTimePanel.scss, expanded
-  .core-time {
-    margin: 0 18px;
-    border-radius: 12px;
-    background: #202025;
-    overflow: hidden;
-    box-shadow:
-      rgba(255, 255, 255, 0.1) 0 1px 0 0 inset,
-      rgba(7, 13, 79, 0.05) 0 0 20px 3px,
-      rgba(7, 13, 79, 0.05) 0 0 40px 20px,
-      rgba(255, 255, 255, 0.06) 0 0 0 1px inset;
-
-    &__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      min-height: 36px;
-      padding: 0 14px;
-    }
-
-    &__title {
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    &__meta {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 500;
-      opacity: 0.5;
-    }
-
-    &__chevron {
-      transform: rotate(180deg);
-    }
-
-    &__band {
-      display: grid;
-      grid-template-columns: minmax(46px, max-content) 1fr;
-      align-items: center;
-      column-gap: 10px;
-      row-gap: 4px;
-      padding: 6px 14px 12px;
-    }
-
-    &__label {
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      opacity: 0.85;
-
-      &--you {
-        color: #9db8ea;
-        opacity: 1;
-      }
-    }
-
-    &__you {
-      padding: 2px 4px;
-      background: rgba(0, 170, 255, 0.12);
-      font-size: 9px;
-      font-style: italic;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      opacity: 0.85;
-    }
-
-    &__track {
-      position: relative;
-      height: 10px;
-      border-radius: 100vw;
-      background: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 100vw;
-        background: rgba(255, 255, 255, 0.05);
-      }
-    }
-
-    &__dot {
-      position: absolute;
-      top: 50%;
-      width: 2px;
-      height: 2px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.6);
-      transform: translate(-50%, -50%);
-
-      &.hour {
-        width: 3px;
-        height: 3px;
-        background: rgba(255, 247, 213, 0.72);
-      }
-    }
-
-    &__segment {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      background: #5c7cd6;
-    }
-
-    &__overlap {
-      position: absolute;
-      top: -2px;
-      bottom: -2px;
-      outline: 1.5px solid var(--color-core);
-    }
-
-    &__scale {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 2px;
-      font-family: var(--font-body);
-      font-size: 10px;
-      opacity: 0.45;
-
-      span:nth-child(2) {
-        padding-left: 9px;
-      }
-
-      span:nth-child(3),
-      span:nth-child(4) {
-        padding-left: 8px;
-      }
-    }
-
-    &__conclusion {
-      padding: 10px 16px 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.075);
-    }
-
-    &__headline {
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    &__range {
-      padding-left: 4px;
-      color: #9cb2e7;
-    }
-  }
-
-  // Header.scss, with the converter open
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 60px;
-    padding: 0 18px;
-
-    &__chip {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      img {
-        border-radius: 50%;
-      }
-    }
-
-    &__pill {
-      display: flex;
-      align-items: center;
-      height: 32px;
-      padding: 0 12px 0 14px;
-      border-radius: 100vw;
-      background: rgba(0, 170, 255, 0.12);
-    }
-
-    &__city {
-      padding-right: 5px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    &__time {
-      min-width: 38px;
-      padding-right: 3px;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-align: right;
-      opacity: 0.85;
-    }
-
-    &__chevron {
-      flex-shrink: 0;
-      opacity: 0.7;
-    }
-
-    &__btns {
-      display: flex;
-      gap: 10px;
-    }
-
-    &__group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 4px;
-      border-radius: 100vw;
-      background: rgba(0, 170, 255, 0.12);
-    }
-
-    // Each icon's drop shadow sits below and to the right of its glyph;
-    // --glyph-shift centres the glyph itself.
-    &__btn {
-      display: block;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background-position: calc(50% + var(--glyph-shift)) calc(50% + var(--glyph-shift));
-      background-repeat: no-repeat;
-
-      &--plus {
-        --glyph-shift: 0.5px;
-        background-size: 15px;
-        background-image: url('/icons/icon-plus-dark.svg');
-      }
-
-      &--convert {
-        --glyph-shift: 0.5px;
-        background-color: rgba(255, 255, 255, 0.2);
-        background-size: 22px;
-        background-image: url('/icons/icon-convert-dark.svg');
-      }
-
-      &--settings {
-        --glyph-shift: 0.8px;
-        background-size: 20px;
-        background-image: url('/icons/icon-setting-header.svg');
-      }
-    }
-  }
-
-  .converter {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px 40px 18px;
-    border-top: 2px solid var(--color-blue);
-    background: #202025;
-
-    &__reset {
-      position: absolute;
-      top: 31px;
-      left: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      opacity: 0.7;
-    }
-
-    &__scale {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 4px 0 8px;
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1;
-      opacity: 0.5;
-
-      span:nth-child(2),
-      span:nth-child(3) {
-        padding-left: 4px;
-      }
-    }
-
-    &__track {
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 12px;
-      padding: 0 10px;
-      border-radius: 2px;
-      background: linear-gradient(90deg, #23212a 0%, #6d6891 50%, #23212a 100%);
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 9px;
-        background: rgba(255, 255, 255, 0.05);
-      }
-    }
-
-    &__dot {
-      position: relative;
-      z-index: 1;
-      width: 2px;
-      height: 2px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.6);
-
-      &.hour {
-        width: 4px;
-        height: 4px;
-        background: rgba(255, 247, 213, 0.72);
-      }
-    }
-
-    // On the 15:00 stop, the sixth of nine: dot centres run from 12px in at
-    // each end.
-    &__thumb {
-      position: absolute;
-      top: 50%;
-      left: calc(12px + (100% - 24px) * 0.625 - 18px);
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      width: 36px;
-      height: 22px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 7px;
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(9px) saturate(160%);
-      -webkit-backdrop-filter: blur(9px) saturate(160%);
-      box-shadow:
-        0 3px 8px rgba(0, 0, 0, 0.14),
-        inset 0 1px 0 rgba(255, 255, 255, 0.28),
-        inset 0 -6px 8px -6px rgba(0, 0, 0, 0.15);
-      transform: translateY(-50%);
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: -60%;
-        left: -15%;
-        right: -15%;
-        height: 90%;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        filter: blur(6px);
-      }
-
-      span {
-        position: relative;
-        z-index: 1;
-        width: 2px;
-        height: 10px;
-        border-radius: 100vw;
-        background: rgba(255, 255, 255, 0.4);
-      }
-    }
-  }
-
-  // EditList.scss
-  .edit-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-    padding: 0 18px 0 24px;
-
-    &__title {
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    &__done {
-      padding: 6px 16px;
-      border-radius: 100vw;
-      background: var(--color-blue);
-      font-size: 12px;
-      font-weight: 700;
-    }
-  }
-
-  .edit-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-
-    &__remove {
-      flex: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #e5484d;
-
-      &::before {
-        content: '';
-        width: 10px;
-        height: 2px;
-        border-radius: 1px;
-        background: #fff;
-      }
-    }
-
-    &__handle {
-      flex: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 36px;
-      opacity: 0.55;
-    }
-  }
-
-  // UndoToast.scss
-  .undo-toast {
-    position: absolute;
-    left: 50%;
-    bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 8px 9px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 100vw;
-    background: rgba(32, 32, 37, 0.92);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap;
-    transform: translateX(-50%);
-
-    &__sep {
-      opacity: 0.4;
-    }
-
-    &__undo {
-      padding: 3px 10px;
-      border-radius: 100vw;
-      background: rgba(0, 170, 255, 0.12);
-      font-weight: 700;
-    }
   }
 </style>
