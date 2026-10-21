@@ -58,6 +58,12 @@
     width: 100%;
   }
 
+  // The site drops the converter's blue top border (the extension's Header.scss
+  // has one). Here, not in the copy, so re-copying keeps it.
+  .header-convert__menu {
+    border-top: 0;
+  }
+
   // The live demo's controls are real buttons; the extension's classes give
   // them their look, over a bare one.
   button {
