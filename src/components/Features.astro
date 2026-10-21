@@ -20,8 +20,8 @@ const gaps = at('2026-10-20T23:30:00Z', TOKYO, BOSTON, KOLKATA);
 // 23:57 on Oct 23 in Tokyo, nine days before Boston leaves daylight saving
 // on Nov 1. The banner and badge are worded as dstCopy.ts words them.
 const [dstBoston] = at('2026-10-23T14:57:00Z', BOSTON);
-// 23:57 in Tokyo, with the converter dragged to 15:00 that day.
-const [converted] = at('2026-10-20T06:00:00Z', BOSTON);
+// The converter dragged to 15:00 in Tokyo.
+const converted = at('2026-10-20T06:00:00Z', TOKYO, BOSTON);
 const convertStops = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 // Edit mode, also at 23:57 in Tokyo.
 const editing = at('2026-10-20T14:57:00Z', TOKYO, PARIS, BOSTON);
@@ -167,53 +167,26 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       <article class="feature">
         <div class="feature__visual feature__visual--converter" aria-hidden="true">
           <div class="skies-popup scene scene--panel">
-            <div class="header header--convert-open">
-              <div class="header-inner">
-                <div class="header-tz-chip">
-                  <span class="header-tz-chip__button">
-                    <span class="header-tz-chip__logo"></span>
-                    <span class="header-tz-chip__pill">
-                      <span class="header-tz-chip__city">Tokyo</span>
-                      <span class="header-tz-chip__time">23:57</span>
-                      <svg class="header-tz-chip__chevron" width="8" height="8" viewBox="0 0 10 10" fill="none">
-                        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
-                      </svg>
-                    </span>
-                  </span>
-                </div>
-                <div class="header-btns">
-                  <div class="header-btns__inner">
-                    <div><span class="header-btn header-btn__plus"></span></div>
-                    <div class="header-convert">
-                      <span class="header-btn header-btn__convert active"></span>
-                      <div class="header-convert__menu">
-                        <span class="reset-button header-convert__reset">
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2.2 4.6A4 4 0 1 1 2 6.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
-                            <path d="M1.8 1.8v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
-                          </svg>
-                        </span>
-                        <div class="header-convert__scale">
-                          {[0, 6, 12, 18, 24].map((h) => <span class="header-convert__scale-label">{h}</span>)}
-                        </div>
-                        <div class="header-convert__track">
-                          {convertStops.map((_, i) => <span class:list={['header-convert__dot', { hour: i % 2 === 0 }]} />)}
-                          <!-- On the 15:00 stop, the sixth of nine: dot centres run from 12px in at each end. -->
-                          <span class="header-convert__thumb" style="left: calc(12px + (100% - 24px) * 0.625 - 18px)"
-                            ><span></span><span></span><span></span></span
-                          >
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="header-btns__inner">
-                    <div><span class="header-btn header-btn__settings"></span></div>
-                  </div>
-                </div>
+            <div class="header-convert__menu">
+              <span class="reset-button header-convert__reset">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.2 4.6A4 4 0 1 1 2 6.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+                  <path d="M1.8 1.8v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <div class="header-convert__scale">
+                {[0, 6, 12, 18, 24].map((h) => <span class="header-convert__scale-label">{h}</span>)}
+              </div>
+              <div class="header-convert__track">
+                {convertStops.map((_, i) => <span class:list={['header-convert__dot', { hour: i % 2 === 0 }]} />)}
+                <!-- On the 15:00 stop, the sixth of nine: dot centres run from 12px in at each end. -->
+                <span class="header-convert__thumb" style="left: calc(12px + (100% - 24px) * 0.625 - 18px)"
+                  ><span></span><span></span><span></span></span
+                >
               </div>
             </div>
             <div class="scene__list scene__list--converted">
-              <SkyCard view={converted} converting />
+              {converted.map((view) => <SkyCard view={view} converting />)}
             </div>
           </div>
         </div>
@@ -226,11 +199,7 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
 
       <article class="feature">
         <div class="feature__visual" aria-hidden="true">
-          <div class="skies-popup scene scene--panel">
-            <div class="edit-list-bar">
-              <span class="edit-list-bar__title">Edit list</span>
-              <span class="edit-list-bar__done">Done</span>
-            </div>
+          <div class="skies-popup scene">
             <div class="scene__list scene__list--edit">
               {
                 editing.map((view) => (
@@ -375,11 +344,9 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       }
     }
 
-    // A piece that includes the popup's chrome (header, edit bar) is shown as
-    // a small popup of its own. Its gutter is 14px, not 18, so the whole
-    // header row fits a phone-width card.
+    // The converter, which sits on the popup's own surface, is shown as a
+    // small popup of its own.
     &--panel {
-      --container-padding-horizontal: 14px;
       min-width: 0;
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 16px;
@@ -388,17 +355,22 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.6);
     }
 
-    // The list's 8px top padding, below the header and its 80px for the converter.
+    // In the popup the converter hangs below the header; here it leads.
+    :global(.header-convert__menu) {
+      position: static;
+      transform: none;
+    }
+
+    // The list's 8px top padding below the converter.
     &__list--converted {
       padding-top: 8px;
       padding-bottom: 14px;
     }
 
-    // Below the 60px edit bar, filling the 256px visual like the converter's
-    // beside it (254px inside the panel's 1px border).
+    // Room below the rows, so the toast covers only the bottom of the last
+    // one and its city and time still show.
     &__list--edit {
-      height: 254px;
-      padding-top: 68px;
+      padding-bottom: 38px;
     }
   }
 
