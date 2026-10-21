@@ -408,8 +408,15 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 10px;
-    border-radius: 12px;
+    // iOS-style continuous corners, as the extension's cards have; a plain
+    // arc that large looks far rounder, so 12px where squircles aren't supported.
+    border-radius: 22px;
+    corner-shape: squircle;
     background: linear-gradient(180deg, var(--c0), var(--c1) 50%, var(--c2));
+
+    @supports not (corner-shape: squircle) {
+      border-radius: 12px;
+    }
     font-family: var(--font-display);
     font-size: 11px;
     font-weight: 600;

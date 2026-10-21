@@ -8,6 +8,13 @@
 // are its own.
 @include meta.load-css('extension/Timezone');
 
+// The site's one change to the cards: 4px above the city and time, not the
+// extension's 6px. Here, not in the copy, so re-copying keeps it. Edit mode's
+// single-row card keeps its 0 (EditList.scss).
+.timezone-inner {
+  padding-top: 4px;
+}
+
 .skies-popup {
   // The extension's :root (src/styles/index.scss). The logo is the site's
   // own copy of logo-header.svg.
