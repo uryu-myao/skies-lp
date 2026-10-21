@@ -509,21 +509,24 @@ const convertStops = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 <style lang="scss">
   .demo {
     position: relative;
+    isolation: isolate;
     margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
 
-    // A twilight glow behind the popup
+    // A twilight glow behind the popup: blue above, red below. It reaches
+    // well past the 420px popup on each side, or the popup hides most of it.
     &::before {
       content: '';
       position: absolute;
-      inset: 8% -12% 12%;
+      inset: -6% -38% 4%;
       z-index: -1;
       background:
-        radial-gradient(closest-side at 35% 40%, rgba(64, 121, 200, 0.45), transparent),
-        radial-gradient(closest-side at 70% 70%, rgba(223, 82, 78, 0.22), transparent);
-      filter: blur(40px);
+        radial-gradient(closest-side at 38% 38%, rgba(64, 121, 200, 0.6), transparent),
+        radial-gradient(closest-side at 64% 72%, rgba(223, 82, 78, 0.34), transparent);
+      filter: blur(48px);
+      pointer-events: none;
     }
 
     // Always the popup's own 420px, so nothing wraps that doesn't in the

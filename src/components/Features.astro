@@ -394,11 +394,11 @@ const pct = (h: number) => `${(h / 24) * 100}%`;
       padding-bottom: 14px;
     }
 
-    // Below the 60px edit bar; room underneath, so the toast covers only the
-    // last row's lower half.
+    // Below the 60px edit bar, filling the 256px visual like the converter's
+    // beside it (254px inside the panel's 1px border).
     &__list--edit {
+      height: 254px;
       padding-top: 68px;
-      padding-bottom: 34px;
     }
   }
 
