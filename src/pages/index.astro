@@ -6,8 +6,7 @@ import InstallButtons from '../components/InstallButtons.astro';
 
 // The screenshot of Firefox's install prompt (dark theme, to match the page).
 // Its width and height hold its space while it loads. While this is null the
-// figure is left out of the build, and the dev server shows a dashed
-// placeholder in its place.
+// figure is left out.
 interface Screenshot {
   src: string;
   width: number;
@@ -49,21 +48,15 @@ const FIREFOX_PROMPT = null as Screenshot | null;
         <div>
           <p class="eyebrow">Privacy</p>
           <h2>Your cities stay on your device.</h2>
-          {(FIREFOX_PROMPT || import.meta.env.DEV) && (
+          {FIREFOX_PROMPT && (
           <figure class="privacy__shot">
-            {
-              FIREFOX_PROMPT ? (
-                <img
-                  src={FIREFOX_PROMPT.src}
-                  width={FIREFOX_PROMPT.width}
-                  height={FIREFOX_PROMPT.height}
-                  alt="Firefox's prompt when adding Skies, with no permissions listed."
-                  loading="lazy"
-                />
-              ) : (
-                <div class="privacy__placeholder">Screenshot: Firefox install prompt</div>
-              )
-            }
+            <img
+              src={FIREFOX_PROMPT.src}
+              width={FIREFOX_PROMPT.width}
+              height={FIREFOX_PROMPT.height}
+              alt="Firefox's prompt when adding Skies, with no permissions listed."
+              loading="lazy"
+            />
             <figcaption>What Firefox shows when you add Skies: no permissions to approve.</figcaption>
           </figure>
           )}
@@ -168,15 +161,11 @@ const FIREFOX_PROMPT = null as Screenshot | null;
     &__shot {
       margin: 28px 0 0;
 
-      img,
-      .privacy__placeholder {
+      img {
         width: 100%;
         max-width: 420px;
         height: auto;
         border-radius: 14px;
-      }
-
-      img {
         border: 1px solid var(--color-border);
       }
 
@@ -185,17 +174,6 @@ const FIREFOX_PROMPT = null as Screenshot | null;
         font-size: 14px;
         color: var(--color-text-faint);
       }
-    }
-
-    // Holds the screenshot's place in development until it's in.
-    &__placeholder {
-      display: grid;
-      place-items: center;
-      aspect-ratio: 4 / 3;
-      border: 1px dashed rgba(255, 255, 255, 0.2);
-      background: var(--color-surface-raised);
-      font-size: 14px;
-      color: var(--color-text-faint);
     }
   }
 
